@@ -182,11 +182,11 @@ def generate_scorecard(df, innings_num):
     })
 
     # Display wickets type and score at which the batter got out
-    wicket_info = df_innings[df_innings['is_wicket'] == True][['batter_name', 'wicket_type', 'cumulative_score']]
+    wicket_info = df_innings[df_innings['is_wicket'] == True][['batter_name', 'wicket_type', 'current_runs']]
     wicket_info = wicket_info.rename(columns={
         'batter_name': 'Batter Name',
         'wicket_type': 'Wicket Type',
-        'cumulative_score': 'Score at Wicket'
+        'current_runs': 'Score at Wicket'
     })
 
     return batter_scores, wicket_info
@@ -231,6 +231,7 @@ def generate_bowler_stats(df, innings_num):
         'wides': 'Wide Balls',
         'no_balls': 'No Balls'
     }, inplace=True)
+    bowler_stats.drop(columns=['balls_bowled'], inplace=True)
     byes = df_innings['byes_runs'].sum()
     leg_byes = df_innings['leg_byes_runs'].sum()
     return bowler_stats,byes,leg_byes

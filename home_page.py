@@ -121,14 +121,17 @@ with tab_1:
             st.session_state.prev_over_num = int(last_ball["over_num"])
             st.session_state.prev_ball_num = int(last_ball["ball_num"])
             if st.session_state.prev_ball_num == 6:
-                over_string = "({} Overs)".format(st.session_state.prev_over_num + 1)
+                over_string = "({} Overs)".format(st.session_state.prev_over_num)
             else:
-                over_string = "({}.{} Overs)".format(st.session_state.prev_over_num, st.session_state.prev_ball_num)
+                over_string = "({}.{} Overs)".format(st.session_state.prev_over_num - 1, st.session_state.prev_ball_num)
 
             st.text("Current Inning: {}".format(st.session_state.innings_num))
             st.text("Current Score: {}/{} {}".format(st.session_state.runs, st.session_state.wickets, over_string))
-            st.text("Current Run Rate: {:.2f}".format(st.session_state.runs 
-                                                      / (st.session_state.prev_over_num * 6 + st.session_state.prev_ball_num) * 6))
+            if (st.session_state.prev_over_num * 6 + st.session_state.prev_ball_num) > 0:
+                st.text("Current Run Rate: {:.2f}".format(st.session_state.runs 
+                                                        / ((st.session_state.prev_over_num - 1) * 6 + st.session_state.prev_ball_num) * 6))
+            else:
+                st.text("Current Run Rate: 0.00")
     
         else:
             st.text("No Ball By Ball Data Available Yet!")
@@ -156,7 +159,7 @@ with tab_1:
             st.switch_page("pages/tagging_page.py")
             
     with sub_col_3:
-        if "match_ball_by_ball_path" in st.session_state:
+        if "match_ball_by_ball_path" in st.session_state and os.path.exists(st.session_state.match_ball_by_ball_path):
             ball_by_ball_data = pd.read_csv(st.session_state.match_ball_by_ball_path)
             ball_by_ball_data = ball_by_ball_data.sort_values(by=["ball_id"])
             download_disabled = False
@@ -172,7 +175,7 @@ with tab_1:
             disabled=download_disabled)
 
     with sub_col_4:
-        scorecard_disabled = "match_ball_by_ball_path" not in st.session_state
+        scorecard_disabled = ("match_ball_by_ball_path" not in st.session_state) or (not os.path.exists(st.session_state.match_ball_by_ball_path))
         if st.button("View Scorecard", disabled=scorecard_disabled):
             st.switch_page("pages/scorecard_page.py")
 

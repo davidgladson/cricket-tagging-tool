@@ -71,6 +71,8 @@ def clear_match_state():
     del st.session_state.match_ball_by_ball_path
     del st.session_state.match_id
     del st.session_state.out_batters
+    del st.session_state.prev_over_num
+    del st.session_state.prev_ball_num
 
 
 def parse_extras_data(extras_type_input, extras_runs_input):
@@ -145,10 +147,9 @@ def save_and_next_ball(over_num, ball_num,
 
 st.set_page_config(
     page_title="Tagging Page",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed", 
+    layout="wide"
 )
-
-st.write("#### Tagging Page")
 
 if ("match_id" not in st.session_state) or ("innings_num" not in st.session_state):
     st.warning("Please select a match and an inning to score!", icon="⚠️")
@@ -193,21 +194,29 @@ batter_list = list(set(batter_list).difference(st.session_state.out_batters))
 col_1, col_2 = st.columns(2)
 
 with col_1:
+    st.write("#### Tagging Page")
+
     st.text("Match Venue: {}".format(match_venue))
     st.text("Match Date: {}".format(match_date))
     st.text("Batting Team: {}".format(batting_team))
     st.text("Bowling Team: {}".format(bowling_team))
     st.text("Innings: {}".format(st.session_state.innings_num))
-    if st.session_state.prev_ball_num == 6:
-        over_string = "({} Overs)".format(st.session_state.prev_over_num + 1)
-    else:
-        over_string = "({}.{} Overs)".format(st.session_state.prev_over_num, st.session_state.prev_ball_num)
-    st.text("Current Score: {}/{} {}".format(st.session_state.runs, st.session_state.wickets, over_string))
-    st.text("Current Run Rate: {:.2f}".format(st.session_state.runs 
-                                              / (st.session_state.prev_over_num * 6 + st.session_state.prev_ball_num) * 6))
     
-with col_2:
-    st.image("images/coming_soon.png")
+    if st.session_state.prev_ball_num == 6:
+        over_string = "({} Overs)".format(st.session_state.prev_over_num)
+    else:
+        over_string = "({}.{} Overs)".format(st.session_state.prev_over_num - 1, st.session_state.prev_ball_num)
+        
+    st.text("Current Score: {}/{} {}".format(st.session_state.runs, st.session_state.wickets, over_string))
+    
+    if (st.session_state.prev_over_num * 6 + st.session_state.prev_ball_num) > 0:
+        st.text("Current Run Rate: {:.2f}".format(st.session_state.runs 
+                                                  / ((st.session_state.prev_over_num - 1) * 6 + st.session_state.prev_ball_num) * 6))
+    else:
+        st.text("Current Run Rate: 0.00")
+    
+# with col_2:
+#     st.image("images/coming_soon.png")
     
 st.divider()
     
