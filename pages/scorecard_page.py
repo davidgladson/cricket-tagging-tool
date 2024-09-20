@@ -14,17 +14,17 @@ if st.button("Home"):
 # print(current_match,"match")
 df = pd.read_csv(f"test_data/sample_tagged_data.csv")
 
-def get_team_stats(df):
-    team_stats = df.groupby('innings_num').agg({'runs_scored':'sum','is_wicket':'sum'}).reset_index()
-    # Filter valid balls (excluding wides and no-balls)
-    valid_balls_df = df[(df['wide'] == 0) & (df['no_ball'] == 0)]
-    overs_stats = valid_balls_df.groupby('innings_num')
+# def get_team_stats(df):
+#     team_stats = df.groupby('innings_num').agg({'runs_scored':'sum','is_wicket':'sum'}).reset_index()
+#     # Filter valid balls (excluding wides and no-balls)
+#     valid_balls_df = df[(df['wide'] == 0) & (df['no_ball'] == 0)]
+#     overs_stats = valid_balls_df.groupby('innings_num')
     
     
 
-    return team_stats
-team_stats = get_team_stats(df)
-st.write(team_stats)
+#     return team_stats
+# team_stats = get_team_stats(df)
+# st.write(team_stats)
 
 def get_current_stats(df):
     latest_stat = df.iloc[-1]
