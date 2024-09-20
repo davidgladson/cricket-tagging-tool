@@ -10,7 +10,7 @@ st.write("# This is Scorecard View!")
 # print("current match",st.session_state.match_id)
 if st.button("Home"):
     st.switch_page("home_page.py")
-# current_match = st.session_state.match_id 
+# current_match = st.session_state.match
 # print(current_match,"match")
 df = pd.read_csv(f"test_data/sample_tagged_data.csv")
 
