@@ -118,9 +118,18 @@ with tab_1:
                 st.session_state.over_ball_ctr = move_to_next_ball(current_over_num, current_ball_num, current_over_ball_ctr)
             st.session_state.runs = int(last_ball["current_runs"])
             st.session_state.wickets = int(last_ball["current_wickets"])
+            st.session_state.prev_over_num = int(last_ball["over_num"])
+            st.session_state.prev_ball_num = int(last_ball["ball_num"])
+            if st.session_state.prev_ball_num == 6:
+                over_string = "({} Overs)".format(st.session_state.prev_over_num + 1)
+            else:
+                over_string = "({}.{} Overs)".format(st.session_state.prev_over_num, st.session_state.prev_ball_num)
 
             st.text("Current Inning: {}".format(st.session_state.innings_num))
-            st.text("Current Score: {}/{}".format(st.session_state.runs, st.session_state.wickets))
+            st.text("Current Score: {}/{} {}".format(st.session_state.runs, st.session_state.wickets, over_string))
+            st.text("Current Run Rate: {:.2f}".format(st.session_state.runs 
+                                                      / (st.session_state.prev_over_num * 6 + st.session_state.prev_ball_num) * 6))
+    
         else:
             st.text("No Ball By Ball Data Available Yet!")
             st.session_state.innings_num = 1

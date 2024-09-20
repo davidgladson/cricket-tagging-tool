@@ -18,6 +18,12 @@ if "over_num" not in st.session_state:
 if "ball_num" not in st.session_state:
     st.session_state.ball_num = 1
     
+if "prev_over_num" not in st.session_state:
+    st.session_state.prev_over_num = 0
+    
+if "prev_ball_num" not in st.session_state:
+    st.session_state.prev_ball_num = 0
+    
 if "over_ball_ctr" not in st.session_state:
     st.session_state.over_ball_ctr = 1
     
@@ -130,6 +136,7 @@ def save_and_next_ball(over_num, ball_num,
     store_data_on_local_csv(st.session_state.match_ball_by_ball_path, data_df)
     
     if not is_extras:
+        st.session_state.prev_over_num, st.session_state.prev_ball_num = st.session_state.over_num, st.session_state.ball_num
         st.session_state.over_num, st.session_state.ball_num, \
             st.session_state.over_ball_ctr = move_to_next_ball(over_num, ball_num, st.session_state.over_ball_ctr)
     else:
@@ -150,7 +157,7 @@ if ("match_id" not in st.session_state) or ("innings_num" not in st.session_stat
 match_details_fetched, players_data_fetched = fetch_running_match_data(st.session_state.match_id)   
  
 st.session_state.match_ball_by_ball_path = "{}/{}/ball_by_ball.csv".format(BASE_DATA_PATH, 
-                                                                           st.session_state.match_id) 
+                                                                           st.session_state.match_id)
 
 if "out_batters" not in st.session_state:
     if os.path.exists(st.session_state.match_ball_by_ball_path):
@@ -191,17 +198,24 @@ with col_1:
     st.text("Batting Team: {}".format(batting_team))
     st.text("Bowling Team: {}".format(bowling_team))
     st.text("Innings: {}".format(st.session_state.innings_num))
-    st.text("Current Score: {}/{}".format(st.session_state.runs, st.session_state.wickets))
+    if st.session_state.prev_ball_num == 6:
+        over_string = "({} Overs)".format(st.session_state.prev_over_num + 1)
+    else:
+        over_string = "({}.{} Overs)".format(st.session_state.prev_over_num, st.session_state.prev_ball_num)
+    st.text("Current Score: {}/{} {}".format(st.session_state.runs, st.session_state.wickets, over_string))
+    st.text("Current Run Rate: {:.2f}".format(st.session_state.runs 
+                                              / (st.session_state.prev_over_num * 6 + st.session_state.prev_ball_num) * 6))
     
 with col_2:
     st.image("images/coming_soon.png")
     
+st.divider()
     
 col_1, col_2, col_3, col_4, col_5, col_6 = st.columns(6)    
 
 with col_1:
-    over_num_input = st.number_input("Over Number:", value=st.session_state.over_num)
-    ball_num_input = st.number_input("Ball Number:", value=st.session_state.ball_num)
+    over_num_input = st.number_input("Over Number:", value=st.session_state.over_num, disabled=True)
+    ball_num_input = st.number_input("Ball Number:", value=st.session_state.ball_num, disabled=True)
     
 with col_2:
     batter_name_input = st.selectbox("Batter:", batter_list, index=None)
@@ -213,7 +227,7 @@ with col_2:
         non_striker_name_input = st.selectbox("Non Striker:", batter_list, disabled=True)    
     
 with col_3:
-    bowler_name_input = st.selectbox("Bowler:", bowler_list)
+    bowler_name_input = st.selectbox("Bowler:", bowler_list, index=None)
 
 with col_4:
     batter_runs_input = st.number_input("Batter Runs", value=0)
@@ -221,7 +235,7 @@ with col_4:
 with col_5:
     is_extras_input = st.checkbox("Extras?", value=False)
     if is_extras_input:
-        extras_type_input = st.selectbox("Extra Type:", EXTRAS_LIST)
+        extras_type_input = st.selectbox("Extra Type:", EXTRAS_LIST, index=None)
         extras_runs_input = st.number_input("Extra Runs", value=None)
     else:
         extras_type_input = None
@@ -230,9 +244,9 @@ with col_5:
 with col_6:
     is_wicket_input = st.checkbox("Wicket?", value=False)
     if is_wicket_input:
-        wicket_type_input = st.selectbox("Wicket Type:", WICKET_TYPE_LIST)
-        out_batter_input = st.selectbox("Dismissed Batter:", batter_list)
-        fielder_name_input = st.selectbox("Fielder Name:", bowler_list)
+        wicket_type_input = st.selectbox("Wicket Type:", WICKET_TYPE_LIST, index=None)
+        out_batter_input = st.selectbox("Dismissed Batter:", batter_list, index=None)
+        fielder_name_input = st.selectbox("Fielder Name:", bowler_list, index=None)
     else:
         wicket_type_input = None
         out_batter_input = None
