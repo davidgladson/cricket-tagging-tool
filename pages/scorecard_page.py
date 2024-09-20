@@ -32,7 +32,18 @@ def get_match_stats(df):
     # Team 1 stats (first innings)
     team1_runs = team1_innings['runs_scored'].sum()
     team1_wickets = team1_innings['is_wicket'].sum()
+    team1_valid_balls = team1_innings[(team1_innings['extras_type'] != 'Wide') & (team1_innings['extras_type'] != 'No Ball')]
+    team1_overs_bowled = team1_valid_balls.shape[0] // 6
+    team1_balls_in_current_over = team1_valid_balls.shape[0] % 6
     
+    #for run rate lets calculate first the total overs:
+    total_overs = team1_overs_bowled + (team1_balls_in_current_over/6)
+    if total_overs:
+        team1_run_rate = round(team1_runs/total_overs,1)
+    else:
+        team1_run_rate = None
+    
+
     # Team 2 stats (second innings, if started)
     team2_runs = team2_innings['runs_scored'].sum()
     team2_wickets = team2_innings['is_wicket'].sum()
@@ -40,15 +51,24 @@ def get_match_stats(df):
     team2_valid_balls = team2_innings[(team2_innings['extras_type'] != 'Wide') & (team2_innings['extras_type'] != 'No Ball')]
     team2_overs_bowled = team2_valid_balls.shape[0] // 6
     team2_balls_in_current_over = team2_valid_balls.shape[0] % 6
+
+    #for run rate lets calculate first the total overs:
+    team2_total_overs = team2_overs_bowled + (team2_balls_in_current_over/6)
+    if team2_total_overs:
+        team2_run_rate = round(team1_runs/team2_total_overs,1)
+    else:
+        team2_run_rate =None
     
     return {
         'team1': {
             'name': team1,
-            'score': f"{int(team1_runs)}/{int(team1_wickets)}",
+            'score': f"{int(team1_runs)}/{int(team1_wickets)} ({team1_overs_bowled}.{team1_balls_in_current_over} overs)",
+            'run_rate':team1_run_rate
         },
         'team2': {
             'name': team2,
-            'score': f"{int(team2_runs)}/{int(team2_wickets)} ({team2_overs_bowled}.{team2_balls_in_current_over} overs)"
+            'score': f"{int(team2_runs)}/{int(team2_wickets)} ({team2_overs_bowled}.{team2_balls_in_current_over} overs)",
+            'run_rate':team2_run_rate
         }
     }
 
@@ -225,6 +245,9 @@ with col1:
     st.header(stats['team1']['name'])
     st.subheader(stats['team1']['score'])
     st.text("1st Innings")
+    run_rate = stats['team1']['run_rate']
+
+    st.text(f"Run Rate: {run_rate}" if run_rate>0 else "Innings Not Yet Started")
 
 # Spacer (Middle Column)
 with col2:
@@ -236,7 +259,8 @@ with col3:
     st.header(stats['team2']['name'])
     st.subheader(stats['team2']['score'])
     st.text("2nd Innings")
-
+    run_rate = 0.0
+    st.text(f"Run Rate: {run_rate}" if run_rate else "Innings Not Yet Started")
 st.divider()
 #=======================================================================================================================
 
