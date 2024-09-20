@@ -88,7 +88,14 @@ def save_and_next_ball(over_num, ball_num,
                        is_wicket, wicket_type, out_batter, fielder_name):
     
     # Increment Current Scores
-    total_ball_runs = batter_runs + extras_runs
+    if extras_runs and batter_runs:
+        total_ball_runs = batter_runs + extras_runs
+    elif not batter_runs and not extras_runs:
+        total_ball_runs = 0
+    elif not batter_runs:
+        total_ball_runs = extras_runs    
+    else:
+        total_ball_runs = batter_runs
     st.session_state.runs += total_ball_runs
     
     if is_wicket:

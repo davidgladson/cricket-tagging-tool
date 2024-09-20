@@ -7,193 +7,277 @@ st.set_page_config(
 )
 
 st.write("# This is Scorecard View!")
-# print("current match",st.session_state.match_id)
 if st.button("Home"):
     st.switch_page("home_page.py")
-# current_match = st.session_state.match_id 
-# print(current_match,"match")
-df = pd.read_csv(f"test_data/sample_tagged_data.csv")
+current_match = st.session_state.match_id
+df = pd.read_csv(f"data/{current_match}/ball_by_ball.csv")
+match_details = pd.read_csv("data/match_details.csv")
 
-# def get_team_stats(df):
-#     team_stats = df.groupby('innings_num').agg({'runs_scored':'sum','is_wicket':'sum'}).reset_index()
-#     # Filter valid balls (excluding wides and no-balls)
-#     valid_balls_df = df[(df['wide'] == 0) & (df['no_ball'] == 0)]
-#     overs_stats = valid_balls_df.groupby('innings_num')
+# def get_current_scores(match_details,df):
     
+
     
 
 #     return team_stats
 # team_stats = get_team_stats(df)
 # st.write(team_stats)
+def get_match_stats(df):
+    
+    teams = df[['batting_team', 'bowling_team']].drop_duplicates().values
+    team1, team2 = teams[0]  
+    
+    team1_innings = df[df['batting_team'] == team1]
+    team2_innings = df[df['batting_team'] == team2]
+    
+    # Team 1 stats (first innings)
+    team1_runs = team1_innings['runs_scored'].sum()
+    team1_wickets = team1_innings['is_wicket'].sum()
+    
+    # Team 2 stats (second innings, if started)
+    team2_runs = team2_innings['runs_scored'].sum()
+    team2_wickets = team2_innings['is_wicket'].sum()
+    
+    team2_valid_balls = team2_innings[(team2_innings['extras_type'] != 'Wide') & (team2_innings['extras_type'] != 'No Ball')]
+    team2_overs_bowled = team2_valid_balls.shape[0] // 6
+    team2_balls_in_current_over = team2_valid_balls.shape[0] % 6
+    
+    return {
+        'team1': {
+            'name': team1,
+            'score': f"{int(team1_runs)}/{int(team1_wickets)}",
+        },
+        'team2': {
+            'name': team2,
+            'score': f"{int(team2_runs)}/{int(team2_wickets)} ({team2_overs_bowled}.{team2_balls_in_current_over} overs)"
+        }
+    }
+
 
 def get_current_stats(df):
     latest_stat = df.iloc[-1]
     current_batters = latest_stat[['batter_name','non_striker_name']].values
-
-    batter_stats = df.groupby('batter_name').agg({'runs_scored':'sum', 'ball_num':'count'}).reset_index()
+    df_innings_no_wide = df[df['extras_type'] != 'Wide']
+    batter_stats = df_innings_no_wide.groupby('batter_name').agg({'batter_runs':'sum', 'ball_id':'count'}).reset_index()
     current_batter_stats = batter_stats[batter_stats['batter_name'].isin(current_batters)]
+
+ 
     
-
-
-    # Get the last two bowlers
     current_bowlers = df[['bowler_id', 'bowler_name']].drop_duplicates(subset='bowler_id', keep='last').tail(2)
 
-    # Filter valid balls (excluding wides and no-balls)
-    valid_balls_df = df[(df['wide'] == 0) & (df['no_ball'] == 0)]
+    
+    valid_balls_df = df[(df['extras_type'] != 'Wide') & (df['extras_type'] == 'No Ball')]
 
-    # Calculate bowler stats (runs conceded and valid balls bowled)
-    bowler_stats = valid_balls_df.groupby('bowler_name').agg({'runs_scored': 'sum', 'ball_num': 'count','is_wicket':'sum'}).reset_index()
+    
+    df_no_byes_legbyes = df[~df['extras_type'].isin(['Byes', 'Leg Byes'])]
 
-    # Calculate overs as overs.ball (e.g., 3.2 overs means 3 overs and 2 balls)
-    bowler_stats['overs_bowled'] = bowler_stats['ball_num'] // 6
-    bowler_stats['balls_in_over'] = bowler_stats['ball_num'] % 6
+    # Calculate bowler stats
+    bowler_stats = df_no_byes_legbyes.groupby('bowler_name').agg({
+        'runs_scored': 'sum', 
+    }).reset_index()
+
+
+    bowler_ball_stats = valid_balls_df.groupby('bowler_name').agg({
+        'ball_id': 'count',  
+        'is_wicket': 'sum'   
+    }).reset_index()
+
+    
+    bowler_stats = bowler_stats.merge(bowler_ball_stats, on='bowler_name')
+
+    
+    bowler_stats['overs_bowled'] = bowler_stats['ball_id'] // 6
+    bowler_stats['balls_in_over'] = bowler_stats['ball_id'] % 6
     bowler_stats['overs_bowled'] = bowler_stats.apply(lambda row: f"{row['overs_bowled']}.{row['balls_in_over']}", axis=1)
 
-    # Filter for the current bowlers
+    
     current_bowler_stats = bowler_stats[bowler_stats['bowler_name'].isin(current_bowlers['bowler_name'])]
     
     return current_batter_stats,current_bowler_stats
-current_batters,current_bowlers = get_current_stats(df)
-col1, col2 = st.columns(2)
 
-# Display batter stats on the left
-with col1:
-    for index, row in current_batters.iterrows():
-        st.write(f"**{row['batter_name']}** - {row['runs_scored']}({row['ball_num']})")
 
-# Display bowler stats on the right
-with col2:  
-    for index, row in current_bowlers.iterrows():
-        st.write(f"**{row['bowler_name']}** - {row['is_wicket']}/{row['runs_scored']} ({row['overs_bowled']})")
-st.divider()
-# st.dataframe(data=df)
-def generate_scorecard(df):
-    # Add batter order to maintain the batting sequence
-    df['batter_order'] = df.groupby('batter_name').cumcount() + 1
-    df['cumulative_score'] = df['runs_scored'].cumsum()
-    first_appearance = df.drop_duplicates('batter_name', keep='first')[['batter_name', 'batter_order']]
+#===============================================================================================================
+#===============================================================================================================
+
+
+def generate_scorecard(df, innings_num):
+    # Filter data by innings
+    df_innings = df[df['innings_num'] == innings_num]
+
     
-    # Group by batter to get their individual score summary
-    batter_scores = df.groupby('batter_name').agg(
-        how_out=('is_wicket', lambda x: df.loc[x.index, 'wicket_type'].dropna().iloc[0] if x.sum() > 0 else 'not out'),  # Show how out or "Not Out"
-        total_runs=('runs_scored', 'sum'),  # Total runs
-        balls_faced=('ball_id', 'count'),  # Balls faced
-        wickets=('is_wicket', 'sum'),  # Wickets (times got out)
-        dot_balls=('runs_scored', lambda x: (x == 0).sum()),  # 0's
-        singles=('runs_scored', lambda x: (x == 1).sum()),  # 1's
-        fours=('runs_scored', lambda x: (x == 4).sum()),  # 4's
-        sixes=('runs_scored', lambda x: (x == 6).sum())  # 6's
+    df_innings['batter_order'] = df_innings.groupby('batter_name').cumcount() + 1
+    current_score = df.iloc[-1]['current_runs']
+    df_innings['cumulative_score'] = current_score
+    first_appearance = df_innings.drop_duplicates('batter_name', keep='first')[['batter_name', 'batter_order']]
 
+    df_innings_no_wide = df_innings[df_innings['extras_type'] != 'Wide']
+
+    batter_scores = df_innings_no_wide.groupby('batter_name').agg(
+        how_out=('is_wicket', lambda x: df_innings.loc[x.index, 'wicket_type'].dropna().iloc[0] if x.sum() > 0 else 'not out'),
+        total_runs=('batter_runs', 'sum'),
+        balls_faced=('ball_id', 'count'),
+        dot_balls=('batter_runs', lambda x: (x == 0).sum()),
+        singles=('batter_runs', lambda x: (x == 1).sum()),
+        fours=('batter_runs', lambda x: (x == 4).sum()),
+        sixes=('batter_runs', lambda x: (x == 6).sum())
     ).reset_index()
 
-    # Merge the first appearance to maintain the batting order
+    
     batter_scores = pd.merge(first_appearance, batter_scores, on='batter_name')
     
-    # Sort by the batter order and drop unnecessary columns
+    
     batter_scores = batter_scores.sort_values('batter_order').drop(columns=['batter_order'])
-    
-    # Rename columns appropriately
-    batter_scores.columns = ['batter_name','wicket_type', 'total_runs', 'balls_faced', 'wickets', 'dot_balls', 'singles', 'fours', 'sixes']
-    
-    # Calculate strike rate
-    batter_scores['Strike Rate'] = (round(batter_scores['total_runs'] / batter_scores['balls_faced'],2)) * 100
-    
-    # Adding Extras row
-    extras = df[['wide', 'no_ball', 'byes', 'leg_byes']].sum().sum()  # Summing all extras
-    extras_row = pd.DataFrame([['Extras', extras, '-','-', '-', '-', '-', '-', '-', '-']], columns=batter_scores.columns)
 
-    # Calculate the total team score
-    total_score = df['runs_scored'].sum() + extras
-    total_row = pd.DataFrame([['Total', total_score, '-','-', '-', '-', '-', '-', '-', '-']], columns=batter_scores.columns)
+    
+    batter_scores.columns = ['batter_name', 'how_out', 'total_runs', 'balls_faced', 'dot_balls', 'singles', 'fours', 'sixes']
+    
+    
+    batter_scores['Strike Rate'] = (round(batter_scores['total_runs'] / batter_scores['balls_faced'], 2)) * 100
+    
+   
+    extras = df_innings[['wide_runs', 'no_ball_runs', 'byes_runs', 'leg_byes_runs']].sum().sum()  # Summing all extras
+    extras_row = pd.DataFrame([['Extras', extras, '-', '-', '-', '-', '-', '-','-']], columns=batter_scores.columns)
 
-    # Append Extras and Total to the batter_scores DataFrame
+    
+    total_score = df_innings['runs_scored'].sum()
+    total_row = pd.DataFrame([['Total', total_score, '-', '-', '-', '-', '-', '-','-']], columns=batter_scores.columns)
+
+   
     batter_scores = pd.concat([batter_scores, extras_row, total_row], ignore_index=True)
-    # Add asterisks for batters who are not out
+    
+    
     batter_scores['batter_name'] = batter_scores.apply(
-        lambda row: row['batter_name'] + '*' if row['wickets'] == 0 else row['batter_name'], axis=1
+        lambda row: row['batter_name'] + '*' if row['how_out'] == 'not out' else row['batter_name'], axis=1
     )
-    batter_scores = batter_scores.drop(columns=['wickets'])
+
+    
     batter_scores = batter_scores.rename(columns={
-    'batter_name': 'Batter Name',
-    'wicket_type': 'How Out',
-    'total_runs': 'Total Runs',
-    'balls_faced': 'Balls Faced',
-    'dot_balls': 'Dot Balls',
-    'singles': '1s',
-    'fours': '4s',
-    'sixes': '6s'
+        'batter_name': 'Batter Name',
+        'how_out': 'How Out',
+        'total_runs': 'Total Runs',
+        'balls_faced': 'Balls Faced',
+        'dot_balls': 'Dot Balls',
+        'singles': '1s',
+        'fours': '4s',
+        'sixes': '6s'
     })
-    
-    # Reset the index (just in case)
-    batter_scores.reset_index(drop=True, inplace=True)
-    
+
     # Display wickets type and score at which the batter got out
-    wicket_info = df[df['is_wicket'] == 1][['batter_name', 'wicket_type', 'cumulative_score']]
+    wicket_info = df_innings[df_innings['is_wicket'] == True][['batter_name', 'wicket_type', 'cumulative_score']]
     wicket_info = wicket_info.rename(columns={
         'batter_name': 'Batter Name',
         'wicket_type': 'Wicket Type',
         'cumulative_score': 'Score at Wicket'
     })
+
     return batter_scores, wicket_info
 
-def generate_bowler_stats(df):
-    # Group by bowler and over to calculate maiden overs (over with no runs conceded)
-    maidens_df = df.groupby(['bowler_name', 'over_num']).agg(total_runs_per_over=('runs_scored', 'sum')).reset_index()
+def generate_bowler_stats(df, innings_num):
+    df_innings = df[df['innings_num'] == innings_num]
+
+    # Group by bowler and over to calculate maiden overs
+    maidens_df = df_innings.groupby(['bowler_name', 'over_num']).agg(total_runs_per_over=('runs_scored', 'sum')).reset_index()
     maidens_df['is_maiden'] = maidens_df['total_runs_per_over'] == 0
-    maidens = maidens_df.groupby('bowler_name')['is_maiden'].sum().reset_index()  # Count maiden overs
+    maidens = maidens_df.groupby('bowler_name')['is_maiden'].sum().reset_index()
+
     
-    # Group by bowler to get bowling stats
-    bowler_stats = df.groupby('bowler_name').agg(
-        balls_bowled=('ball_id', 'count'),  # Balls bowled
-        runs_conceded=('runs_scored', 'sum'),  # Runs conceded
-        wickets=('is_wicket', 'sum'),  # Wickets taken
-        wides=('wide', 'sum'),  # Wide balls
-        no_balls=('no_ball', 'sum')  # No balls
+    bowler_stats = df_innings.groupby('bowler_name').agg(
+        balls_bowled=('ball_id', 'count'),
+        wickets=('is_wicket', 'sum'),
+        wides=('wide_runs', 'sum'),
+        no_balls=('no_ball_runs', 'sum')
     ).reset_index()
 
-    # Calculate overs bowled (1 over = 6 legit balls, excluding wides and no-balls)
+   
     legit_balls = bowler_stats['balls_bowled'] - (bowler_stats['wides'] + bowler_stats['no_balls'])
-    bowler_stats['overs'] = legit_balls // 6 + (legit_balls % 6) / 10  # Fractional part for partial overs
+    bowler_stats['overs'] = legit_balls // 6 + (legit_balls % 6) / 10
 
-    # Merge maidens information
+    ball_with_not_byes =df_innings[~df_innings['extras_type'].isin(['Byes', 'Leg Byes'])]
+    bowler_stats['runs_conceded'] = ball_with_not_byes['runs_scored'].sum()
+    # Merge maidens
     bowler_stats = pd.merge(bowler_stats, maidens, on='bowler_name', how='left')
 
-    # Calculate economy rate (runs conceded per over)
+   
     bowler_stats['economy'] = bowler_stats['runs_conceded'] / bowler_stats['overs']
 
-    # If a bowler hasn't bowled enough legitimate balls, set overs and economy to 0
-    bowler_stats['overs'] = bowler_stats['overs'].fillna(0)
-    bowler_stats['economy'] = bowler_stats['economy'].fillna(0)
-
-    # Re-arrange columns: Add overs after bowler_name, maiden overs after overs
+    # Rearrange columns
     bowler_stats = bowler_stats[['bowler_name', 'overs', 'is_maiden', 'balls_bowled', 'runs_conceded', 'wickets', 'wides', 'no_balls', 'economy']]
     bowler_stats.rename(columns={
+        'bowler_name': 'Bowler Name',
         'is_maiden': 'Maiden Overs',
-        'bowler_name':'Bowler Name',
-        'overs':'Overs',
-        'balls_bowled':'Balls Bowled',
-        'runs_conceded':'Runs Conceded',
-        'no_balls':'no balls'
-        }, inplace=True)
+        'wides': 'Wide Balls',
+        'no_balls': 'No Balls'
+    }, inplace=True)
+    byes = df_innings['byes_runs'].sum()
+    leg_byes = df_innings['leg_byes_runs'].sum()
+    return bowler_stats,byes,leg_byes
 
-    return bowler_stats
+innings_options = df['innings_num'].unique()
 
+#===============================================================================================================
+                                    #Current Stats For Teams
+#===============================================================================================================
+stats = get_match_stats(df)
+col1, col2, col3 = st.columns([2, 1, 2])
 
-# Generate the scorecard data
-batter_scores, wicket_info = generate_scorecard(df)
+# Team 1 (Left side)
+with col1:
+    
+    st.header(stats['team1']['name'])
+    st.subheader(stats['team1']['score'])
+    st.text("1st Innings")
 
-# Display the scorecard using Streamlit
-st.title("Cricket Scorecard")
+# Spacer (Middle Column)
+with col2:
+    st.write("")  
 
-st.subheader("Batting Summary")
+# Team 2 (Right side)
+with col3:
+      
+    st.header(stats['team2']['name'])
+    st.subheader(stats['team2']['score'])
+    st.text("2nd Innings")
+
+st.divider()
+#=======================================================================================================================
+
+#=======================================================Current Batter and Bowler Stats=================================
+current_batters,current_bowlers = get_current_stats(df)
+col1, col2 = st.columns(2)
+
+# Display batter stats on the left
+with col1:
+    st.subheader("Current Batters")
+    for index, row in current_batters.iterrows():
+        st.write(f"**{row['batter_name']}** - {row['batter_runs']}({row['ball_id']})")
+
+# Display bowler stats on the right
+with col2:  
+    st.subheader("Current Bowlers")
+    for index, row in current_bowlers.iterrows():
+        st.write(f"**{row['bowler_name']}** - {row['is_wicket']}/{row['runs_scored']} ({row['overs_bowled']})")
+st.divider()
+
+#======================================================================================================================
+
+#=====================================================Match Summary================================================================
+#dropdown to select innings
+selected_innings = st.selectbox("Select Innings", innings_options)
+
+# Generate the scorecard data for selected innings
+batter_scores, wicket_info = generate_scorecard(df, selected_innings)
+
+# Display the scorecard
+st.subheader(f"Innings {selected_innings} - Batting Summary")
 st.dataframe(batter_scores,hide_index=True)
 
-# Generate bowlers' statistics
-bowler_stats = generate_bowler_stats(df)
-
-# Display the bowlers' statistics using Streamlit
-st.subheader("Bowling Summary")
+# Generate and display bowler stats
+bowler_stats,byes,leg_byes = generate_bowler_stats(df, selected_innings)
+st.subheader(f"Innings {selected_innings} - Bowling Summary")
 st.dataframe(bowler_stats,hide_index=True)
 
-st.subheader("Wicket Information")
-st.dataframe(wicket_info,hide_index=True)
+# Display wicket information
+if not wicket_info.empty: 
+    st.subheader(f"Innings {selected_innings} - Wicket Information")
+    st.dataframe(wicket_info,hide_index=True)
+
+st.write(f"Extras(b{int(byes)},lb{int(leg_byes)})")
