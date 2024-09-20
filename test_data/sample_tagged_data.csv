@@ -8,7 +8,7 @@ innings_num,over_num,ball_num,ball_id,batter_id,batter_name,non_striker_id,non_s
 1,1,6,100107,ind1,smriti,ind2,harman,eng1,kate cross,1,0,0,0,0,0,
 1,2,1,100201,ind2,harman,ind1,smriti,eng2,sarah glenn,1,0,0,0,0,0,
 1,2,2,100202,ind1,smriti,ind2,harman,eng2,sarah glenn,0,0,0,0,0,1,caught
-1,2,3,100203,ind3,shefali varma,ind2,harman,eng2,sarah glenn,0,0,0,0,0,0,
+1,2,3,100203,ind3,shefali varma,ind2,harman,eng2,sarah glenn,0,0,0,0,0,0,   
 1,2,4,100204,ind3,shefali varma,ind2,harman,eng2,sarah glenn,3,0,0,0,0,0,
 1,2,5,100205,ind2,harman,ind3,shefali varma,eng2,sarah glenn,4,0,0,0,0,0,
 1,2,6,100206,ind2,harman,ind2,shefali varma,eng2,sarah glenn,6,0,0,0,0,0,

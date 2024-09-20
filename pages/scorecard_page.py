@@ -7,16 +7,70 @@ st.set_page_config(
 )
 
 st.write("# This is Scorecard View!")
-
+# print("current match",st.session_state.match_id)
 if st.button("Home"):
     st.switch_page("home_page.py")
-    
-df = pd.read_csv("test_data/sample_tagged_data.csv")
+# current_match = st.session_state.match_id 
+# print(current_match,"match")
+df = pd.read_csv(f"test_data/sample_tagged_data.csv")
 
+def get_team_stats(df):
+    team_stats = df.groupby('innings_num').agg({'runs_scored':'sum','is_wicket':'sum'}).reset_index()
+    # Filter valid balls (excluding wides and no-balls)
+    valid_balls_df = df[(df['wide'] == 0) & (df['no_ball'] == 0)]
+    overs_stats = valid_balls_df.groupby('innings_num')
+    
+    
+
+    return team_stats
+team_stats = get_team_stats(df)
+st.write(team_stats)
+
+def get_current_stats(df):
+    latest_stat = df.iloc[-1]
+    current_batters = latest_stat[['batter_name','non_striker_name']].values
+
+    batter_stats = df.groupby('batter_name').agg({'runs_scored':'sum', 'ball_num':'count'}).reset_index()
+    current_batter_stats = batter_stats[batter_stats['batter_name'].isin(current_batters)]
+    
+
+
+    # Get the last two bowlers
+    current_bowlers = df[['bowler_id', 'bowler_name']].drop_duplicates(subset='bowler_id', keep='last').tail(2)
+
+    # Filter valid balls (excluding wides and no-balls)
+    valid_balls_df = df[(df['wide'] == 0) & (df['no_ball'] == 0)]
+
+    # Calculate bowler stats (runs conceded and valid balls bowled)
+    bowler_stats = valid_balls_df.groupby('bowler_name').agg({'runs_scored': 'sum', 'ball_num': 'count','is_wicket':'sum'}).reset_index()
+
+    # Calculate overs as overs.ball (e.g., 3.2 overs means 3 overs and 2 balls)
+    bowler_stats['overs_bowled'] = bowler_stats['ball_num'] // 6
+    bowler_stats['balls_in_over'] = bowler_stats['ball_num'] % 6
+    bowler_stats['overs_bowled'] = bowler_stats.apply(lambda row: f"{row['overs_bowled']}.{row['balls_in_over']}", axis=1)
+
+    # Filter for the current bowlers
+    current_bowler_stats = bowler_stats[bowler_stats['bowler_name'].isin(current_bowlers['bowler_name'])]
+    
+    return current_batter_stats,current_bowler_stats
+current_batters,current_bowlers = get_current_stats(df)
+col1, col2 = st.columns(2)
+
+# Display batter stats on the left
+with col1:
+    for index, row in current_batters.iterrows():
+        st.write(f"**{row['batter_name']}** - {row['runs_scored']}({row['ball_num']})")
+
+# Display bowler stats on the right
+with col2:  
+    for index, row in current_bowlers.iterrows():
+        st.write(f"**{row['bowler_name']}** - {row['is_wicket']}/{row['runs_scored']} ({row['overs_bowled']})")
+st.divider()
 # st.dataframe(data=df)
 def generate_scorecard(df):
     # Add batter order to maintain the batting sequence
     df['batter_order'] = df.groupby('batter_name').cumcount() + 1
+    df['cumulative_score'] = df['runs_scored'].cumsum()
     first_appearance = df.drop_duplicates('batter_name', keep='first')[['batter_name', 'batter_order']]
     
     # Group by batter to get their individual score summary
@@ -73,12 +127,13 @@ def generate_scorecard(df):
     # Reset the index (just in case)
     batter_scores.reset_index(drop=True, inplace=True)
     
-    # Display wickets type for each batter who got out
-    wicket_info = df[df['is_wicket'] == 1][['batter_name', 'wicket_type']]
+    # Display wickets type and score at which the batter got out
+    wicket_info = df[df['is_wicket'] == 1][['batter_name', 'wicket_type', 'cumulative_score']]
     wicket_info = wicket_info.rename(columns={
         'batter_name': 'Batter Name',
-        'wicket_type': 'Wicket Type'
-        })
+        'wicket_type': 'Wicket Type',
+        'cumulative_score': 'Score at Wicket'
+    })
     return batter_scores, wicket_info
 
 def generate_bowler_stats(df):
