@@ -8,10 +8,20 @@ from utils import create_path_if_not_exists, store_data_on_local_csv
 
 if "match_id" not in st.session_state:
     st.session_state.match_id = None
+    
+
+def match_list_formatter(match_id_str):
+    if match_id_str is not None:
+        splits = match_id_str.split("_")
+        unparsed_date = str(splits[2])
+        parsed_match_date = "{}-{}-{}".format(unparsed_date[-2:], unparsed_date[-4:-2], unparsed_date[:4])
+        return "{} vs {} ({})".format(str(splits[0]).title(), str(splits[1]).title(), parsed_match_date)
+    return None
+
 
 def store_match_details(venue, date, time, team_1_name, team_1_list, team_2_name, team_2_list, toss_winner, toss_choice):
-    unique_match_id = "{}_{}_{}".format(str(team_1_name).replace(" ", "_").upper().strip(), 
-                                        str(team_2_name).replace(" ", "_").upper().strip(), 
+    unique_match_id = "{}_{}_{}".format(str(team_1_name).replace(" ", "-").upper().strip(), 
+                                        str(team_2_name).replace(" ", "-").upper().strip(), 
                                         date.strftime('%Y%m%d'))
     
     match_data_path = "{}/{}".format(BASE_DATA_PATH, unique_match_id)
@@ -70,7 +80,8 @@ with tab_1:
         match_id_list = matches.match_id.unique().tolist()
     else:
         match_id_list = []
-    match_id_in = st.selectbox("Select a Match to View Details/Score:", match_id_list, index=None)
+    match_id_in = st.selectbox("Select a Match to View Details/Score:", match_id_list, index=None, 
+                               format_func=match_list_formatter)
     
     if st.button("Select Match"):
         st.session_state.match_id = match_id_in
@@ -129,15 +140,31 @@ with tab_1:
     
     with sub_col_2:
         if st.button("Start/Resume Scoring"):
-            st.session_state.innings_num = int(innings_num_in)
+            if st.session_state.match_id is None or innings_num_in is None:
+                st.rerun()
+            else:
+                st.session_state.innings_num = int(innings_num_in)
             st.switch_page("pages/tagging_page.py")
             
     with sub_col_3:
-        if st.button("End Match"):
-            st.switch_page("home_page.py")
+        if "match_ball_by_ball_path" in st.session_state:
+            ball_by_ball_data = pd.read_csv(st.session_state.match_ball_by_ball_path)
+            ball_by_ball_data = ball_by_ball_data.sort_values(by=["ball_id"])
+            download_disabled = False
+        else:
+            ball_by_ball_data = pd.DataFrame()
+            download_disabled = True
+            
+        st.download_button(
+            label="Download Data",
+            data=ball_by_ball_data.to_csv(index=False).encode("utf-8"),
+            file_name="ball_by_ball_data.csv",
+            mime="text/csv", 
+            disabled=download_disabled)
 
     with sub_col_4:
-        if st.button("View Scorecard"):
+        scorecard_disabled = "match_ball_by_ball_path" not in st.session_state
+        if st.button("View Scorecard", disabled=scorecard_disabled):
             st.switch_page("pages/scorecard_page.py")
 
 with tab_2:
@@ -152,11 +179,6 @@ with tab_2:
         
         team_name_1_in = st.selectbox("Team 1:", TEAM_LIST, index=None)
         team_list_1_in = st.text_area("Playing XI Team 1:")
-        
-        st.divider()
-        
-        toss_winner_in = st.selectbox("Toss Won By:", TEAM_LIST, index=None)
-        
 
     with col_2:
         sub_col_1, sub_col_2 = st.columns(2)
@@ -169,11 +191,20 @@ with tab_2:
             
         st.divider()
         
-        team_name_2_in = st.selectbox("Team 2:", TEAM_LIST, index=None)
-        team_list_2_in = st.text_area("Playing XI Team 2:")
+        if team_name_1_in is not None:
+            other_team_list = set(TEAM_LIST).difference(set([team_name_1_in])) 
+            other_team_picker_disabled = False
+        else: 
+            other_team_list = TEAM_LIST
+            other_team_picker_disabled = True
+        team_name_2_in = st.selectbox("Team 2:", other_team_list, index=None, disabled=other_team_picker_disabled)
+        team_list_2_in = st.text_area("Playing XI Team 2:", disabled=other_team_picker_disabled)
         
-        st.divider()
+    with col_1:    
+        toss_team_list = list(filter(lambda x: x is not None, [team_name_1_in, team_name_2_in]))
+        toss_winner_in = st.selectbox("Toss Won By:", toss_team_list, index=None)
         
+    with col_2:    
         toss_choice_in = st.selectbox("Toss Choice:", TOSS_CHOICE_LIST, index=None)
         
     _, _, col_3, _, _ = st.columns(5)
