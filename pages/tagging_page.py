@@ -61,13 +61,14 @@ def parse_extras_data(extras_type_input, extras_runs_input):
 
 
 def save_and_next_ball(over_num, ball_num,
-                       batter_name, non_striker_name, bowler_name,
-                       runs, is_extras, extras_type, extras_runs, 
+                       batting_team_name, batter_name, non_striker_name, bowling_team_name, bowler_name,
+                       batter_runs, is_extras, extras_type, extras_runs, 
                        is_wicket, wicket_type, out_batter, fielder_name):
     
     # Increment Current Scores
-    st.session_state.runs += runs
-        
+    total_ball_runs = batter_runs + extras_runs
+    st.session_state.runs += total_ball_runs
+    
     if is_wicket:
         st.session_state.wickets += 1
         
@@ -79,13 +80,16 @@ def save_and_next_ball(over_num, ball_num,
         "over_num": over_num,
         "ball_num": ball_num,
         "ball_id":  str(st.session_state.innings_num).zfill(1) + str(over_num).zfill(3) + str(st.session_state.over_ball_ctr).zfill(2), 
+        "batting_team": batting_team_name,
         "batter_id": None,
         "batter_name": batter_name, 
         "non_striker_id": None, 
-        "non_striker_name": non_striker_name, 
+        "non_striker_name": non_striker_name,
+        "bowling_team": bowling_team_name, 
         "bowler_id": None,
         "bowler_name": bowler_name, 
-        "runs_scored": runs, 
+        "runs_scored": total_ball_runs,
+        "batter_runs": batter_runs, 
         "is_extras": is_extras, 
         "extras_type": extras_type, 
         "extras_runs": extras_runs,
@@ -174,7 +178,7 @@ with col_3:
     bowler_name_input = st.selectbox("Bowler:", bowler_list)
 
 with col_4:
-    runs_input = st.number_input("Total Runs", value=None)
+    batter_runs_input = st.number_input("Batter Runs", value=None)
 
 with col_5:
     is_extras_input = st.checkbox("Extras?", value=False)
@@ -215,7 +219,7 @@ with col_5:
 with col_6: 
     if st.button("Save and Next"):
         save_and_next_ball(over_num_input, ball_num_input, 
-                           batter_name_input, non_striker_name_input, bowler_name_input,
-                           runs_input, is_extras_input, extras_type_input, extras_runs_input, 
+                           batting_team, batter_name_input, non_striker_name_input, bowling_team, bowler_name_input,
+                           batter_runs_input, is_extras_input, extras_type_input, extras_runs_input, 
                            is_wicket_input, wicket_type_input, out_batter_input, fielder_name_input)
         st.rerun()

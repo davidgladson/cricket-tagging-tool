@@ -70,7 +70,7 @@ with tab_1:
         match_id_list = matches.match_id.unique().tolist()
     else:
         match_id_list = []
-    match_id_in = st.selectbox("Select a Match to View Details/Score:", match_id_list)
+    match_id_in = st.selectbox("Select a Match to View Details/Score:", match_id_list, index=None)
     
     if st.button("Select Match"):
         st.session_state.match_id = match_id_in
@@ -113,8 +113,7 @@ with tab_1:
         else:
             st.text("No Ball By Ball Data Available Yet!")
             st.session_state.innings_num = 1
-            st.session_state.over_num, st.session_state.ball_num, \
-                st.session_state.over_ball_ctr = 1, 1, 1
+            st.session_state.over_num, st.session_state.ball_num, st.session_state.over_ball_ctr = 1, 1, 1
             st.session_state.runs = 0
             st.session_state.wickets = 0
             
@@ -147,16 +146,16 @@ with tab_2:
     col_1, col_2 = st.columns(2)
 
     with col_1:
-        venue_in = st.selectbox("Match Venue:", VENUE_LIST)
+        venue_in = st.selectbox("Match Venue:", VENUE_LIST, index=None)
             
         st.divider()
         
-        team_name_1_in = st.selectbox("Team 1:", TEAM_LIST)
+        team_name_1_in = st.selectbox("Team 1:", TEAM_LIST, index=None)
         team_list_1_in = st.text_area("Playing XI Team 1:")
         
         st.divider()
         
-        toss_winner_in = st.selectbox("Toss Won By:", TEAM_LIST)
+        toss_winner_in = st.selectbox("Toss Won By:", TEAM_LIST, index=None)
         
 
     with col_2:
@@ -170,16 +169,16 @@ with tab_2:
             
         st.divider()
         
-        team_name_2_in = st.selectbox("Team 2:", TEAM_LIST)
+        team_name_2_in = st.selectbox("Team 2:", TEAM_LIST, index=None)
         team_list_2_in = st.text_area("Playing XI Team 2:")
         
         st.divider()
         
-        toss_choice_in = st.selectbox("Toss Choice:", TOSS_CHOICE_LIST)
+        toss_choice_in = st.selectbox("Toss Choice:", TOSS_CHOICE_LIST, index=None)
         
-    col_1, col_2, col_3 = st.columns(3)
+    _, _, col_3, _, _ = st.columns(5)
         
-    with col_2:
+    with col_3:
         if st.button("Save Match Details"):
             store_match_details(venue_in, date_in, time_in, 
                                 team_name_1_in, team_list_1_in, team_name_2_in, team_list_2_in, 
