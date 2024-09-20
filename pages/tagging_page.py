@@ -2,11 +2,9 @@ import streamlit as st
 import pandas as pd
 import os
 
-EXTRAS_LIST = ["No Ball", "Wide", "Byes", "Leg Byes"]
-WICKET_TYPE_LIST = ["Bowled", "LBW", "Caught", "Stumped", "Run Out", "Hit Wicket"]
+from constants import EXTRAS_LIST, WICKET_TYPE_LIST, MATCH_DETAILS_PATH, BASE_DATA_PATH
 
-BASE_DATA_PATH = "data"
-MATCH_DETAILS_PATH = "{}/match_details.csv".format(BASE_DATA_PATH)
+from utils import store_data_on_local_csv
 
 if "runs" not in st.session_state:
     st.session_state.runs = 0
@@ -20,12 +18,9 @@ if "over_num" not in st.session_state:
 if "ball_num" not in st.session_state:
     st.session_state.ball_num = 1
     
-def store_data_on_local_csv(store_path, df):
-    if os.path.exists(store_path):
-        df.to_csv(store_path, mode="a", header=False, index=False)
-    else:
-        df.to_csv(store_path, index=False)
-
+if "over_ball_ctr" not in st.session_state:
+    st.session_state.over_ball_ctr = 1
+    
 @st.cache_data
 def fetch_running_match_data(match_id):
     match_details_df = pd.read_csv(MATCH_DETAILS_PATH)
@@ -37,27 +32,53 @@ def fetch_running_match_data(match_id):
     return match_details.iloc[0], players_df
 
 @st.cache_data
-def move_to_next_ball(over_num, ball_num):
+def move_to_next_ball(over_num, ball_num, over_ball_ctr):
     if ball_num == 6:
         next_ball_num = 1
         next_over_num = over_num + 1
+        next_over_ball_ctr = 1
     else:
         next_ball_num = ball_num + 1
         next_over_num = over_num
+        next_over_ball_ctr = over_ball_ctr + 1
         
-    return next_over_num, next_ball_num
+    return next_over_num, next_ball_num, next_over_ball_ctr
+
+
+def parse_extras_data(extras_type_input, extras_runs_input):
+    wide_runs, no_ball_runs, byes_runs, leg_byes_runs = 0, 0, 0, 0
+    
+    if extras_type_input == "Wide":
+        wide_runs += extras_runs_input
+    elif extras_type_input == "No Ball":
+        no_ball_runs += extras_runs_input
+    elif extras_type_input == "Byes":
+        byes_runs += extras_runs_input
+    elif extras_type_input == "Leg Byes":
+        leg_byes_runs += extras_runs_input
+        
+    return wide_runs, no_ball_runs, byes_runs, leg_byes_runs
+
 
 def save_and_next_ball(over_num, ball_num,
                        batter_name, non_striker_name, bowler_name,
                        runs, is_extras, extras_type, extras_runs, 
-                       is_wicket, wicket_type, out_batter):
+                       is_wicket, wicket_type, out_batter, fielder_name):
+    
+    # Increment Current Scores
+    st.session_state.runs += runs
+        
+    if is_wicket:
+        st.session_state.wickets += 1
+        
+    wide_runs, no_ball_runs, byes_runs, leg_byes_runs = parse_extras_data(extras_type, extras_runs)
         
     data_df = pd.DataFrame([{
         "match_id": st.session_state.match_id, 
         "innings_num": st.session_state.innings_num, 
         "over_num": over_num,
         "ball_num": ball_num,
-        "ball_id": None, 
+        "ball_id":  str(st.session_state.innings_num).zfill(1) + str(over_num).zfill(3) + str(st.session_state.over_ball_ctr).zfill(2), 
         "batter_id": None,
         "batter_name": batter_name, 
         "non_striker_id": None, 
@@ -67,21 +88,25 @@ def save_and_next_ball(over_num, ball_num,
         "runs_scored": runs, 
         "is_extras": is_extras, 
         "extras_type": extras_type, 
-        "extras_runs": extras_runs, 
+        "extras_runs": extras_runs,
+        "wide_runs": wide_runs,  
+        "no_ball_runs": no_ball_runs, 
+        "byes_runs": byes_runs, 
+        "leg_byes_runs": leg_byes_runs, 
         "is_wicket": is_wicket, 
         "wicket_type": wicket_type, 
-        "out_batter": out_batter      
+        "out_batter": out_batter, 
+        "fielder_name": fielder_name, 
+        "current_runs": st.session_state.runs, 
+        "current_wickets": st.session_state.wickets  
     }])
     store_data_on_local_csv(st.session_state.match_ball_by_ball_path, data_df)
     
-    # Increment Current Scores
-    st.session_state.runs += runs
-        
-    if is_wicket:
-        st.session_state.wickets += 1
-    
     if not is_extras:
-        st.session_state.over_num, st.session_state.ball_num = move_to_next_ball(over_num, ball_num)
+        st.session_state.over_num, st.session_state.ball_num, \
+            st.session_state.over_ball_ctr = move_to_next_ball(over_num, ball_num, st.session_state.over_ball_ctr)
+    else:
+        st.session_state.over_ball_ctr += 1
     
 
 st.set_page_config(
@@ -106,9 +131,6 @@ team_1_name = match_details_fetched["team_1"]
 team_2_name = match_details_fetched["team_2"]
 toss_winner = match_details_fetched["toss_winner"]
 toss_choice = match_details_fetched["toss_choice"]
-
-print(st.session_state.match_id)
-print(st.session_state.innings_num)
 
 if toss_choice == "Batting":
     odd_inning_batting_team = toss_winner
@@ -168,9 +190,11 @@ with col_6:
     if is_wicket_input:
         wicket_type_input = st.selectbox("Wicket Type:", WICKET_TYPE_LIST)
         out_batter_input = st.selectbox("Dismissed Batter:", batter_list)
+        fielder_name_input = st.selectbox("Fielder Name:", bowler_list)
     else:
         wicket_type_input = None
         out_batter_input = None
+        fielder_name_input = None
 
 col_1, col_2, col_3, col_4, col_5, col_6 = st.columns(6)  
 
@@ -179,6 +203,7 @@ with col_1:
         st.session_state.innings_num += 1
         st.session_state.over_num = 1
         st.session_state.ball_num = 1
+        st.session_state.over_ball_ctr = 1
         st.session_state.runs = 0
         st.session_state.wickets = 0
         st.rerun()
@@ -192,5 +217,5 @@ with col_6:
         save_and_next_ball(over_num_input, ball_num_input, 
                            batter_name_input, non_striker_name_input, bowler_name_input,
                            runs_input, is_extras_input, extras_type_input, extras_runs_input, 
-                           is_wicket_input, wicket_type_input, out_batter_input)
+                           is_wicket_input, wicket_type_input, out_batter_input, fielder_name_input)
         st.rerun()
