@@ -85,7 +85,7 @@ def get_current_stats(df):
     current_bowlers = df[['bowler_id', 'bowler_name']].drop_duplicates(subset='bowler_id', keep='last').tail(2)
 
     
-    valid_balls_df = df[(df['extras_type'] != 'Wide') & (df['extras_type'] == 'No Ball')]
+    valid_balls_df = df[(df['extras_type'] != 'Wide') & (df['extras_type'] != 'No Ball')]
 
     
     df_no_byes_legbyes = df[~df['extras_type'].isin(['Byes', 'Leg Byes'])]
@@ -212,7 +212,11 @@ def generate_bowler_stats(df, innings_num):
     bowler_stats['overs'] = legit_balls // 6 + (legit_balls % 6) / 10
 
     ball_with_not_byes =df_innings[~df_innings['extras_type'].isin(['Byes', 'Leg Byes'])]
-    bowler_stats['runs_conceded'] = ball_with_not_byes['runs_scored'].sum()
+    
+    runs_conceded = ball_with_not_byes.groupby('bowler_name')['runs_scored'].sum().reset_index()
+    runs_conceded.rename(columns={'runs_scored': 'runs_conceded'}, inplace=True)
+
+    bowler_stats = pd.merge(bowler_stats, runs_conceded, on='bowler_name', how='left')
     # Merge maidens
     bowler_stats = pd.merge(bowler_stats, maidens, on='bowler_name', how='left')
 
@@ -237,7 +241,7 @@ innings_options = df['innings_num'].unique()
                                     #Current Stats For Teams
 #===============================================================================================================
 stats = get_match_stats(df)
-col1, col2, col3 = st.columns([2, 1, 2])
+col1, col2, col3 = st.columns([3, 1, 3])
 
 # Team 1 (Left side)
 with col1:
