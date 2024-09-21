@@ -247,8 +247,15 @@ with col_5:
 with col_6:
     is_wicket_input = st.checkbox("Wicket?", value=False)
     if is_wicket_input:
+        
+        out_batter_options = []
+        if batter_name_input is not None:
+            out_batter_options.append(batter_name_input)
+        if non_striker_name_input is not None:
+            out_batter_options.append(non_striker_name_input)
+            
         wicket_type_input = st.selectbox("Wicket Type:", WICKET_TYPE_LIST, index=None)
-        out_batter_input = st.selectbox("Dismissed Batter:", batter_list, index=None)
+        out_batter_input = st.selectbox("Dismissed Batter:", out_batter_options, index=None)
         fielder_name_input = st.selectbox("Fielder Name:", bowler_list, index=None)
     else:
         wicket_type_input = None

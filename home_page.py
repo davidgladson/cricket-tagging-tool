@@ -3,23 +3,14 @@ import datetime
 import pandas as pd
 import os
 
-from constants import VENUE_LIST, TEAM_LIST, TOSS_CHOICE_LIST, BASE_DATA_PATH, MATCH_DETAILS_PATH
-from utils import create_path_if_not_exists, store_data_on_local_csv, get_over_string, get_current_run_rate
+from constants import VENUE_LIST, TOSS_CHOICE_LIST, BASE_DATA_PATH, MATCH_DETAILS_PATH
+from utils import create_path_if_not_exists, store_data_on_local_csv, get_over_string, get_current_run_rate, get_squad_details, \
+    match_list_formatter, move_to_next_ball, get_lineup_display_data, parse_squad_data_input
 
 if "match_id" not in st.session_state:
     st.session_state.match_id = None
-    
 
-def match_list_formatter(match_id_str):
-    if match_id_str is not None:
-        splits = match_id_str.split("_")
-        unparsed_date = str(splits[2])
-        parsed_match_date = "{}-{}-{}".format(unparsed_date[-2:], unparsed_date[-4:-2], unparsed_date[:4])
-        return "{} vs {} ({})".format(str(splits[0]).title(), str(splits[1]).title(), parsed_match_date)
-    return None
-
-
-def store_match_details(venue, date, time, team_1_name, team_1_list, team_2_name, team_2_list, toss_winner, toss_choice):
+def store_match_details(venue, date, time, team_1_name, team_1_df, team_2_name, team_2_df, toss_winner, toss_choice):
     unique_match_id = "{}_{}_{}".format(str(team_1_name).replace(" ", "-").upper().strip(), 
                                         str(team_2_name).replace(" ", "-").upper().strip(), 
                                         date.strftime('%Y%m%d'))
@@ -39,31 +30,17 @@ def store_match_details(venue, date, time, team_1_name, team_1_list, team_2_name
     }])
     store_data_on_local_csv(MATCH_DETAILS_PATH, data_df)
     
-    team_1_player_names = str(team_1_list).split(",")
-    team_2_player_names = str(team_2_list).split(",")    
-    team_1_player_rows = [{"match_id": unique_match_id, "team_name": team_1_name, "player_name": player_name.strip()} 
-                          for player_name in team_1_player_names]
-    team_2_player_rows = [{"match_id": unique_match_id, "team_name": team_2_name, "player_name": player_name.strip()} 
-                          for player_name in team_2_player_names]
+    # team_1_player_names = str(team_1_df).split(",")
+    # team_2_player_names = str(team_2_df).split(",")    
+    # team_1_player_rows = [{"match_id": unique_match_id, "team_name": team_1_name, "player_name": player_name.strip()} 
+    #                       for player_name in team_1_player_names]
+    # team_2_player_rows = [{"match_id": unique_match_id, "team_name": team_2_name, "player_name": player_name.strip()} 
+    #                       for player_name in team_2_player_names]
     
-    player_data_df = pd.DataFrame(team_1_player_rows + team_2_player_rows)
+    player_data_df = pd.concat([team_1_df[team_1_df["playing"]], team_2_df[team_2_df["playing"]]])
+    player_data_df["match_id"] = unique_match_id
     player_data_df_path = "{}/players.csv".format(match_data_path)
     store_data_on_local_csv(player_data_df_path, player_data_df)
-
-
-@st.cache_data
-def move_to_next_ball(over_num, ball_num, over_ball_ctr):
-    if ball_num == 6:
-        next_ball_num = 1
-        next_over_num = over_num + 1
-        next_over_ball_ctr = 1
-    else:
-        next_ball_num = ball_num + 1
-        next_over_num = over_num
-        next_over_ball_ctr = over_ball_ctr + 1
-        
-    return next_over_num, next_ball_num, next_over_ball_ctr
-
 
 st.set_page_config(
     page_title="Cricket Tagging Tool",
@@ -176,6 +153,9 @@ with tab_1:
             st.switch_page("pages/scorecard_page.py")
 
 with tab_2:
+    squads = get_squad_details()
+    TEAM_LIST = squads.team_name.unique().tolist()
+    
     # Match Details Input Section
             
     col_1, col_2 = st.columns(2)
@@ -186,7 +166,10 @@ with tab_2:
         st.divider()
         
         team_name_1_in = st.selectbox("Team 1:", TEAM_LIST, index=None)
-        team_list_1_in = st.text_area("Playing XI Team 1:")
+        if team_name_1_in is not None:
+            team_1_squad, col_config = get_lineup_display_data(squads, team_name_1_in)
+            team_list_1_in = st.data_editor(team_1_squad, 
+                                            num_rows="fixed", hide_index=True, column_config=col_config, height=563)
 
     with col_2:
         sub_col_1, sub_col_2 = st.columns(2)
@@ -205,8 +188,12 @@ with tab_2:
         else: 
             other_team_list = TEAM_LIST
             other_team_picker_disabled = True
+        
         team_name_2_in = st.selectbox("Team 2:", other_team_list, index=None, disabled=other_team_picker_disabled)
-        team_list_2_in = st.text_area("Playing XI Team 2:", disabled=other_team_picker_disabled)
+        if team_name_2_in is not None:
+            team_2_squad, col_config = get_lineup_display_data(squads, team_name_2_in)
+            team_list_2_in = st.data_editor(team_2_squad, 
+                                            num_rows="fixed", hide_index=True, column_config=col_config, height=563)
         
     with col_1:    
         toss_team_list = list(filter(lambda x: x is not None, [team_name_1_in, team_name_2_in]))
