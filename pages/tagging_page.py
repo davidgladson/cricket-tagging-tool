@@ -4,7 +4,7 @@ import os
 
 from constants import EXTRAS_LIST, WICKET_TYPE_LIST, MATCH_DETAILS_PATH, BASE_DATA_PATH
 
-from utils import store_data_on_local_csv
+from utils import store_data_on_local_csv, get_over_string, get_current_run_rate
 
 if "runs" not in st.session_state:
     st.session_state.runs = 0
@@ -202,18 +202,12 @@ with col_1:
     st.text("Bowling Team: {}".format(bowling_team))
     st.text("Innings: {}".format(st.session_state.innings_num))
     
-    if st.session_state.prev_ball_num == 6:
-        over_string = "({} Overs)".format(st.session_state.prev_over_num)
-    else:
-        over_string = "({}.{} Overs)".format(st.session_state.prev_over_num - 1, st.session_state.prev_ball_num)
+    over_string = get_over_string(st.session_state.prev_over_num, st.session_state.prev_ball_num)    
         
-    st.text("Current Score: {}/{} {}".format(st.session_state.runs, st.session_state.wickets, over_string))
-    
-    if (st.session_state.prev_over_num * 6 + st.session_state.prev_ball_num) > 0:
-        st.text("Current Run Rate: {:.2f}".format(st.session_state.runs 
-                                                  / ((st.session_state.prev_over_num - 1) * 6 + st.session_state.prev_ball_num) * 6))
-    else:
-        st.text("Current Run Rate: 0.00")
+    st.text("Current Score: {}/{} {}".format(st.session_state.runs, st.session_state.wickets, over_string))    
+    st.text("Current Run Rate: {:.2f}".format(get_current_run_rate(st.session_state.runs, 
+                                                                   st.session_state.prev_over_num, 
+                                                                   st.session_state.prev_ball_num)))
     
 # with col_2:
 #     st.image("images/coming_soon.png")

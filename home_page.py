@@ -4,7 +4,7 @@ import pandas as pd
 import os
 
 from constants import VENUE_LIST, TEAM_LIST, TOSS_CHOICE_LIST, BASE_DATA_PATH, MATCH_DETAILS_PATH
-from utils import create_path_if_not_exists, store_data_on_local_csv
+from utils import create_path_if_not_exists, store_data_on_local_csv, get_over_string, get_current_run_rate
 
 if "match_id" not in st.session_state:
     st.session_state.match_id = None
@@ -120,18 +120,14 @@ with tab_1:
             st.session_state.wickets = int(last_ball["current_wickets"])
             st.session_state.prev_over_num = int(last_ball["over_num"])
             st.session_state.prev_ball_num = int(last_ball["ball_num"])
-            if st.session_state.prev_ball_num == 6:
-                over_string = "({} Overs)".format(st.session_state.prev_over_num)
-            else:
-                over_string = "({}.{} Overs)".format(st.session_state.prev_over_num - 1, st.session_state.prev_ball_num)
+            
+            over_string = get_over_string(st.session_state.prev_over_num, st.session_state.prev_ball_num)
 
             st.text("Current Inning: {}".format(st.session_state.innings_num))
             st.text("Current Score: {}/{} {}".format(st.session_state.runs, st.session_state.wickets, over_string))
-            if (st.session_state.prev_over_num * 6 + st.session_state.prev_ball_num) > 0:
-                st.text("Current Run Rate: {:.2f}".format(st.session_state.runs 
-                                                        / ((st.session_state.prev_over_num - 1) * 6 + st.session_state.prev_ball_num) * 6))
-            else:
-                st.text("Current Run Rate: 0.00")
+            st.text("Current Run Rate: {:.2f}".format(get_current_run_rate(st.session_state.runs, 
+                                                                           st.session_state.prev_over_num, 
+                                                                           st.session_state.prev_ball_num)))
     
         else:
             st.text("No Ball By Ball Data Available Yet!")
