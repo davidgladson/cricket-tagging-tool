@@ -69,12 +69,11 @@ def get_lineup_display_data(squads, team_name):
     team_squad["playing"] = True
     column_config = {
         "player_name": st.column_config.Column(
-            "Streamlit Widgets",
+            "Player Name",
             width="medium",
             disabled=True),
         "playing": st.column_config.CheckboxColumn(
             "Playing",
-            help="Select your **favorite** widgets",
             default=True), 
         "team_name": None, 
         "player_id": None, 
@@ -82,7 +81,8 @@ def get_lineup_display_data(squads, team_name):
         "bowling_hand": None, 
         "bowling_pace_spin": None, 
         "bowling_style": None, 
-        "primary_role": None
+        "primary_role": None, 
+        "_id": None,
         }
     return team_squad, column_config
 

@@ -2,9 +2,11 @@ import streamlit as st
 import pandas as pd
 import os
 
-from constants import EXTRAS_LIST, WICKET_TYPE_LIST, MATCH_DETAILS_PATH, BASE_DATA_PATH
+from constants import EXTRAS_LIST, WICKET_TYPE_LIST, MATCH_DETAILS_PATH, BASE_DATA_PATH, DB_URI
 
 from utils import store_data_on_local_csv, get_over_string, get_current_run_rate
+
+from db_utils import MongoDBConnector
 
 if "runs" not in st.session_state:
     st.session_state.runs = 0
@@ -27,15 +29,6 @@ if "prev_ball_num" not in st.session_state:
 if "over_ball_ctr" not in st.session_state:
     st.session_state.over_ball_ctr = 1
     
-@st.cache_data
-def fetch_running_match_data(match_id):
-    match_details_df = pd.read_csv(MATCH_DETAILS_PATH)
-    match_details = match_details_df[match_details_df["match_id"] == match_id]
-    
-    players_data_path = "{}/{}/players.csv".format(BASE_DATA_PATH, match_id)
-    players_df = pd.read_csv(players_data_path)
-    
-    return match_details.iloc[0], players_df
 
 @st.cache_data
 def move_to_next_ball(over_num, ball_num, over_ball_ctr):
@@ -68,7 +61,7 @@ def clear_match_state():
     del st.session_state.over_ball_ctr
     del st.session_state.runs
     del st.session_state.wickets
-    del st.session_state.match_ball_by_ball_path
+    # del st.session_state.match_ball_by_ball_path
     del st.session_state.match_id
     del st.session_state.out_batters
     del st.session_state.prev_over_num
@@ -90,7 +83,7 @@ def parse_extras_data(extras_type_input, extras_runs_input):
     return wide_runs, no_ball_runs, byes_runs, leg_byes_runs
 
 
-def save_and_next_ball(over_num, ball_num,
+def save_and_next_ball(conn, over_num, ball_num,
                        batting_team_name, batter_name, non_striker_name, bowling_team_name, bowler_name,
                        batter_runs, is_extras, extras_type, extras_runs, 
                        is_wicket, wicket_type, out_batter, fielder_name):
@@ -105,7 +98,7 @@ def save_and_next_ball(over_num, ball_num,
         
     wide_runs, no_ball_runs, byes_runs, leg_byes_runs = parse_extras_data(extras_type, extras_runs)
         
-    data_df = pd.DataFrame([{
+    bbb_data_list = [{
         "match_id": st.session_state.match_id, 
         "innings_num": st.session_state.innings_num, 
         "over_num": over_num,
@@ -134,8 +127,8 @@ def save_and_next_ball(over_num, ball_num,
         "fielder_name": fielder_name, 
         "current_runs": st.session_state.runs, 
         "current_wickets": st.session_state.wickets  
-    }])
-    store_data_on_local_csv(st.session_state.match_ball_by_ball_path, data_df)
+    }]
+    conn.add_new_bbb(bbb_data_list)
     
     if not is_extras:
         st.session_state.prev_over_num, st.session_state.prev_ball_num = st.session_state.over_num, st.session_state.ball_num
@@ -151,18 +144,23 @@ st.set_page_config(
     layout="wide"
 )
 
+@st.cache_resource
+def connect_db(db_uri):
+    return MongoDBConnector(DB_URI=db_uri)
+
+connector = connect_db(DB_URI)
+
 if ("match_id" not in st.session_state) or ("innings_num" not in st.session_state):
     st.warning("Please select a match and an inning to score!", icon="⚠️")
     st.switch_page("home_page.py")
     
-match_details_fetched, players_data_fetched = fetch_running_match_data(st.session_state.match_id)   
- 
-st.session_state.match_ball_by_ball_path = "{}/{}/ball_by_ball.csv".format(BASE_DATA_PATH, 
-                                                                           st.session_state.match_id)
+match_details_fetched = connector.get_single_match_details(match_id=st.session_state.match_id)
+ball_by_ball_data = match_details_fetched.get("ball_by_ball_data", None)
+players_data_fetched = match_details_fetched.get("lineups", None)
 
 if "out_batters" not in st.session_state:
-    if os.path.exists(st.session_state.match_ball_by_ball_path):
-        data_df = pd.read_csv(st.session_state.match_ball_by_ball_path)
+    if ball_by_ball_data is not None and len(ball_by_ball_data) > 0:
+        data_df = pd.DataFrame(ball_by_ball_data)
         st.session_state.out_batters = set(data_df[data_df["is_wicket"]].out_batter.unique())
     else:
         st.session_state.out_batters = set()
@@ -184,8 +182,13 @@ else:
 batting_team = odd_inning_batting_team if int(st.session_state.innings_num) % 2 == 1 else even_inning_batting_team
 bowling_team = even_inning_batting_team if int(st.session_state.innings_num) % 2 == 1 else odd_inning_batting_team
 
-batter_list = players_data_fetched[players_data_fetched["team_name"] == batting_team].player_name.unique().tolist()
-bowler_list = players_data_fetched[players_data_fetched["team_name"] == bowling_team].player_name.unique().tolist()
+if players_data_fetched is not None and len(players_data_fetched) > 0: 
+    players_data_fetched = pd.DataFrame(players_data_fetched)
+    batter_list = players_data_fetched[players_data_fetched["team_name"] == batting_team].player_name.unique().tolist()
+    bowler_list = players_data_fetched[players_data_fetched["team_name"] == bowling_team].player_name.unique().tolist()
+else:
+    batter_list = []
+    bowler_list = []
 
 # Filter Out Dismissed Batters
 batter_list = list(set(batter_list).difference(st.session_state.out_batters))
@@ -208,9 +211,6 @@ with col_1:
     st.text("Current Run Rate: {:.2f}".format(get_current_run_rate(st.session_state.runs, 
                                                                    st.session_state.prev_over_num, 
                                                                    st.session_state.prev_ball_num)))
-    
-# with col_2:
-#     st.image("images/coming_soon.png")
     
 st.divider()
     
@@ -283,7 +283,7 @@ with col_5:
 
 with col_6: 
     if st.button("Save and Next"):
-        save_and_next_ball(over_num_input, ball_num_input, 
+        save_and_next_ball(connector, over_num_input, ball_num_input, 
                            batting_team, batter_name_input, non_striker_name_input, bowling_team, bowler_name_input,
                            batter_runs_input, is_extras_input, extras_type_input, extras_runs_input, 
                            is_wicket_input, wicket_type_input, out_batter_input, fielder_name_input)

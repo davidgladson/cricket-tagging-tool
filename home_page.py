@@ -3,14 +3,18 @@ import datetime
 import pandas as pd
 import os
 
-from constants import VENUE_LIST, TOSS_CHOICE_LIST, BASE_DATA_PATH, MATCH_DETAILS_PATH
+from constants import VENUE_LIST, TOSS_CHOICE_LIST, BASE_DATA_PATH, MATCH_DETAILS_PATH, DB_URI
 from utils import create_path_if_not_exists, store_data_on_local_csv, get_over_string, get_current_run_rate, get_squad_details, \
     match_list_formatter, move_to_next_ball, get_lineup_display_data, parse_squad_data_input
+from db_utils import MongoDBConnector
 
 if "match_id" not in st.session_state:
     st.session_state.match_id = None
+    
+if "ball_by_ball_data" not in st.session_state:
+    st.session_state.ball_by_ball_data = None
 
-def store_match_details(venue, date, time, team_1_name, team_1_df, team_2_name, team_2_df, toss_winner, toss_choice):
+def store_match_details(conn, venue, date, time, team_1_name, team_1_df, team_2_name, team_2_df, toss_winner, toss_choice):
     unique_match_id = "{}_{}_{}".format(str(team_1_name).replace(" ", "-").upper().strip(), 
                                         str(team_2_name).replace(" ", "-").upper().strip(), 
                                         date.strftime('%Y%m%d'))
@@ -18,7 +22,7 @@ def store_match_details(venue, date, time, team_1_name, team_1_df, team_2_name, 
     match_data_path = "{}/{}".format(BASE_DATA_PATH, unique_match_id)
     create_path_if_not_exists(match_data_path)
     
-    data_df = pd.DataFrame([{
+    match_details = [{
         "match_id": unique_match_id, 
         "venue": venue, 
         "match_start_date": date.strftime("%Y-%m-%d"),
@@ -27,25 +31,23 @@ def store_match_details(venue, date, time, team_1_name, team_1_df, team_2_name, 
         "team_2": team_2_name, 
         "toss_winner": toss_winner, 
         "toss_choice": toss_choice        
-    }])
-    store_data_on_local_csv(MATCH_DETAILS_PATH, data_df)
-    
-    # team_1_player_names = str(team_1_df).split(",")
-    # team_2_player_names = str(team_2_df).split(",")    
-    # team_1_player_rows = [{"match_id": unique_match_id, "team_name": team_1_name, "player_name": player_name.strip()} 
-    #                       for player_name in team_1_player_names]
-    # team_2_player_rows = [{"match_id": unique_match_id, "team_name": team_2_name, "player_name": player_name.strip()} 
-    #                       for player_name in team_2_player_names]
+    }]
+    conn.add_new_matches(match_details)    
     
     player_data_df = pd.concat([team_1_df[team_1_df["playing"]], team_2_df[team_2_df["playing"]]])
     player_data_df["match_id"] = unique_match_id
-    player_data_df_path = "{}/players.csv".format(match_data_path)
-    store_data_on_local_csv(player_data_df_path, player_data_df)
+    conn.add_new_lineups(player_data_df.to_dict('records'))
 
 st.set_page_config(
     page_title="Cricket Tagging Tool",
     initial_sidebar_state="collapsed"
 )
+
+@st.cache_resource
+def connect_db(db_uri):
+    return MongoDBConnector(DB_URI=db_uri)
+
+connector = connect_db(DB_URI)
 
 st.write("#### Welcome to Cricket Tagging Tool!")
 
@@ -53,7 +55,7 @@ tab_1, tab_2 = st.tabs(["Select From Existing Games", "Start A New Match"])
 
 with tab_1:
     if os.path.exists(MATCH_DETAILS_PATH):
-        matches = pd.read_csv(MATCH_DETAILS_PATH)
+        matches = pd.DataFrame(connector.get_matches())
         match_id_list = matches.match_id.unique().tolist()
     else:
         match_id_list = []
@@ -62,17 +64,9 @@ with tab_1:
     
     if st.button("Select Match"):
         st.session_state.match_id = match_id_in
-        
-        st.session_state.match_ball_by_ball_path = "{}/{}/ball_by_ball.csv".format(BASE_DATA_PATH,
-                                                                                   st.session_state.match_id)  
-        
-        if os.path.exists(st.session_state.match_ball_by_ball_path):
-            ball_by_ball_data = pd.read_csv(st.session_state.match_ball_by_ball_path)
-            ball_by_ball_data = ball_by_ball_data.sort_values(by=["ball_id"])
-        else:
-            ball_by_ball_data = None
-        
-        match_details_fetched = matches[matches["match_id"] == st.session_state.match_id].iloc[0]
+
+        match_details_fetched = connector.get_single_match_details(match_id=st.session_state.match_id)
+        st.session_state.ball_by_ball_data = match_details_fetched["ball_by_ball_data"]
         
         match_venue = match_details_fetched["venue"]
         match_date = match_details_fetched["match_start_date"]
@@ -83,12 +77,12 @@ with tab_1:
         st.text("Match Venue: {}".format(match_venue))
         st.text("Match Date: {}".format(match_date))
         
-        if ball_by_ball_data is not None:
-            last_ball = ball_by_ball_data.iloc[-1]
+        if st.session_state.ball_by_ball_data is not None and len(st.session_state.ball_by_ball_data) > 0:
+            last_ball = st.session_state.ball_by_ball_data[-1]
             current_over_num = last_ball["over_num"]
             current_ball_num = last_ball["ball_num"]
             current_over_ball_ctr = int(str(last_ball["ball_id"])[-2:])
-            current_inning = ball_by_ball_data.innings_num.max()
+            current_inning = max([x["innings_num"] for x in st.session_state.ball_by_ball_data])
             
             st.session_state.innings_num = current_inning
             st.session_state.over_num, st.session_state.ball_num, \
@@ -132,28 +126,27 @@ with tab_1:
             st.switch_page("pages/tagging_page.py")
             
     with sub_col_3:
-        if "match_ball_by_ball_path" in st.session_state and os.path.exists(st.session_state.match_ball_by_ball_path):
-            ball_by_ball_data = pd.read_csv(st.session_state.match_ball_by_ball_path)
-            ball_by_ball_data = ball_by_ball_data.sort_values(by=["ball_id"])
+        if st.session_state.ball_by_ball_data is not None and len(st.session_state.ball_by_ball_data) > 0:
+            bbb_data_download = pd.DataFrame(st.session_state.ball_by_ball_data)
             download_disabled = False
         else:
-            ball_by_ball_data = pd.DataFrame()
+            bbb_data_download = pd.DataFrame()
             download_disabled = True
             
         st.download_button(
             label="Download Data",
-            data=ball_by_ball_data.to_csv(index=False).encode("utf-8"),
+            data=bbb_data_download.to_csv(index=False).encode("utf-8"),
             file_name="ball_by_ball_data.csv",
             mime="text/csv", 
             disabled=download_disabled)
 
     with sub_col_4:
-        scorecard_disabled = ("match_ball_by_ball_path" not in st.session_state) or (not os.path.exists(st.session_state.match_ball_by_ball_path))
+        scorecard_disabled = (st.session_state.ball_by_ball_data is None) or (len(st.session_state.ball_by_ball_data) <= 0)
         if st.button("View Scorecard", disabled=scorecard_disabled):
             st.switch_page("pages/scorecard_page.py")
 
 with tab_2:
-    squads = get_squad_details()
+    squads = pd.DataFrame(connector.get_squads())
     TEAM_LIST = squads.team_name.unique().tolist()
     
     # Match Details Input Section
@@ -206,7 +199,7 @@ with tab_2:
         
     with col_3:
         if st.button("Save Match Details"):
-            store_match_details(venue_in, date_in, time_in, 
+            store_match_details(connector, venue_in, date_in, time_in, 
                                 team_name_1_in, team_list_1_in, team_name_2_in, team_list_2_in, 
                                 toss_winner_in, toss_choice_in)
             st.switch_page("home_page.py")
