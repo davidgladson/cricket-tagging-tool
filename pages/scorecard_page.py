@@ -1,17 +1,28 @@
 import streamlit as st
 import pandas as pd
 
+from db_utils import MongoDBConnector
+
+from constants import DB_URI
+
 st.set_page_config(
     page_title="Scorecard View",
     initial_sidebar_state="collapsed"
 )
 
+@st.cache_resource
+def connect_db(db_uri):
+    return MongoDBConnector(DB_URI=db_uri)
+
+connector = connect_db(DB_URI)
+
 st.write("# This is Scorecard View!")
 if st.button("Home"):
     st.switch_page("home_page.py")
 current_match = st.session_state.match_id
-df = pd.read_csv(f"data/{current_match}/ball_by_ball.csv")
-match_details = pd.read_csv("data/match_details.csv")
+match_details = connector.get_single_match_details(st.session_state.match_id)
+df = pd.DataFrame(match_details.get("ball_by_ball_data", []))
+
 
 # def get_current_scores(match_details,df):
     
