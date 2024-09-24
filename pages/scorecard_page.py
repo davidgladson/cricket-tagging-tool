@@ -17,8 +17,8 @@ def connect_db(db_uri):
 connector = connect_db(DB_URI)
 
 st.write("# This is Scorecard View!")
-if st.button("Home"):
-    st.switch_page("home_page.py")
+if st.button("Tagging Home"):
+    st.switch_page("pages/tagging_home_page.py")
 current_match = st.session_state.match_id
 match_details = connector.get_single_match_details(st.session_state.match_id)
 df = pd.DataFrame(match_details.get("ball_by_ball_data", []))

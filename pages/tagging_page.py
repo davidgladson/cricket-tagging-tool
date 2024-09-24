@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 
-from constants import EXTRAS_LIST, WICKET_TYPE_LIST, MATCH_DETAILS_PATH, BASE_DATA_PATH, DB_URI
+from constants import EXTRAS_LIST, WICKET_TYPE_LIST, SHOT_TYPE_OPTIONS, DB_URI
 
 from utils import store_data_on_local_csv, get_over_string, get_current_run_rate
 
@@ -86,7 +86,7 @@ def parse_extras_data(extras_type_input, extras_runs_input):
 def save_and_next_ball(conn, over_num, ball_num,
                        batting_team_name, batter_name, batter_id, non_striker_name, non_striker_id, 
                        bowling_team_name, bowler_name, bowler_id,
-                       batter_runs, is_extras, extras_type, extras_runs, 
+                       batter_runs, shot_type, is_extras, extras_type, extras_runs, 
                        is_wicket, wicket_type, out_batter, fielder_name):
     
     # Increment Current Scores
@@ -115,6 +115,7 @@ def save_and_next_ball(conn, over_num, ball_num,
         "bowler_name": bowler_name, 
         "runs_scored": total_ball_runs,
         "batter_runs": batter_runs, 
+        "shot_type": shot_type,
         "is_extras": is_extras, 
         "extras_type": extras_type, 
         "extras_runs": extras_runs,
@@ -153,7 +154,7 @@ connector = connect_db(DB_URI)
 
 if ("match_id" not in st.session_state) or ("innings_num" not in st.session_state):
     st.warning("Please select a match and an inning to score!", icon="⚠️")
-    st.switch_page("home_page.py")
+    st.switch_page("pages/tagging_home_page.py")
     
 match_details_fetched = connector.get_single_match_details(match_id=st.session_state.match_id)
 ball_by_ball_data = match_details_fetched.get("ball_by_ball_data", None)
@@ -247,6 +248,8 @@ with col_3:
 
 with col_4:
     batter_runs_input = st.number_input("Batter Runs", value=0)
+    
+    shot_type_input = st.selectbox("Shot Type:", SHOT_TYPE_OPTIONS, index=None)
 
 with col_5:
     is_extras_input = st.checkbox("Extras?", value=False)
@@ -287,18 +290,18 @@ with col_1:
 with col_2: 
     if st.button("End Match"):
         clear_match_state()
-        st.switch_page("home_page.py")
+        st.switch_page("pages/tagging_home_page.py")
         
 with col_5: 
     if st.button("Pause"):
         clear_match_state()
-        st.switch_page("home_page.py")
+        st.switch_page("pages/tagging_home_page.py")
 
 with col_6: 
     if st.button("Save and Next"):
         save_and_next_ball(connector, over_num_input, ball_num_input, 
                            batting_team, batter_name_input, batter_id_input, non_striker_name_input, non_striker_id_input, 
                            bowling_team, bowler_name_input, bowler_id_input,
-                           batter_runs_input, is_extras_input, extras_type_input, extras_runs_input, 
+                           batter_runs_input, shot_type_input, is_extras_input, extras_type_input, extras_runs_input, 
                            is_wicket_input, wicket_type_input, out_batter_input, fielder_name_input)
         st.rerun()
