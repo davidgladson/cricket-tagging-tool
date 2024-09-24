@@ -84,7 +84,8 @@ def parse_extras_data(extras_type_input, extras_runs_input):
 
 
 def save_and_next_ball(conn, over_num, ball_num,
-                       batting_team_name, batter_name, non_striker_name, bowling_team_name, bowler_name,
+                       batting_team_name, batter_name, batter_id, non_striker_name, non_striker_id, 
+                       bowling_team_name, bowler_name, bowler_id,
                        batter_runs, is_extras, extras_type, extras_runs, 
                        is_wicket, wicket_type, out_batter, fielder_name):
     
@@ -105,12 +106,12 @@ def save_and_next_ball(conn, over_num, ball_num,
         "ball_num": ball_num,
         "ball_id":  str(st.session_state.innings_num).zfill(1) + str(over_num).zfill(3) + str(st.session_state.over_ball_ctr).zfill(2), 
         "batting_team": batting_team_name,
-        "batter_id": None,
+        "batter_id": int(batter_id),
         "batter_name": batter_name, 
-        "non_striker_id": None, 
+        "non_striker_id": int(non_striker_id), 
         "non_striker_name": non_striker_name,
         "bowling_team": bowling_team_name, 
-        "bowler_id": None,
+        "bowler_id": int(bowler_id),
         "bowler_name": bowler_name, 
         "runs_scored": total_ball_runs,
         "batter_runs": batter_runs, 
@@ -224,13 +225,25 @@ with col_2:
     batter_name_input = st.selectbox("Batter:", batter_list, index=None)
     
     if batter_name_input is not None:
+        batter_id_input = players_data_fetched[players_data_fetched["player_name"] == batter_name_input]["player_id"].iloc[0]
         non_striker_list = set(batter_list).difference(set([batter_name_input]))
         non_striker_name_input = st.selectbox("Non Striker:", non_striker_list)
+        
+        if non_striker_name_input is not None:
+            non_striker_id_input = players_data_fetched[players_data_fetched["player_name"] == non_striker_name_input]["player_id"].iloc[0]
+        else:
+            non_striker_id_input = None
     else:
-        non_striker_name_input = st.selectbox("Non Striker:", batter_list, disabled=True)    
+        batter_id_input = None
+        non_striker_name_input = st.selectbox("Non Striker:", batter_list, disabled=True)   
+        non_striker_id_input = None 
     
 with col_3:
     bowler_name_input = st.selectbox("Bowler:", bowler_list, index=None)
+    if bowler_name_input is not None:
+        bowler_id_input = players_data_fetched[players_data_fetched["player_name"] == bowler_name_input]["player_id"].iloc[0]
+    else:
+        bowler_id_input = None
 
 with col_4:
     batter_runs_input = st.number_input("Batter Runs", value=0)
@@ -284,7 +297,8 @@ with col_5:
 with col_6: 
     if st.button("Save and Next"):
         save_and_next_ball(connector, over_num_input, ball_num_input, 
-                           batting_team, batter_name_input, non_striker_name_input, bowling_team, bowler_name_input,
+                           batting_team, batter_name_input, batter_id_input, non_striker_name_input, non_striker_id_input, 
+                           bowling_team, bowler_name_input, bowler_id_input,
                            batter_runs_input, is_extras_input, extras_type_input, extras_runs_input, 
                            is_wicket_input, wicket_type_input, out_batter_input, fielder_name_input)
         st.rerun()
