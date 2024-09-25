@@ -1,7 +1,7 @@
 import streamlit as st
 
 st.set_page_config(
-    page_title="Scorecard View",
+    page_title="Cricket Tagging And Analysis Tool",
     initial_sidebar_state="collapsed"
 )
 

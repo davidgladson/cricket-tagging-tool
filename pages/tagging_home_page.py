@@ -3,9 +3,8 @@ import datetime
 import pandas as pd
 import os
 
-from constants import VENUE_LIST, TOSS_CHOICE_LIST, BASE_DATA_PATH, MATCH_DETAILS_PATH, DB_URI
-from utils import create_path_if_not_exists, store_data_on_local_csv, get_over_string, get_current_run_rate, get_squad_details, \
-    match_list_formatter, move_to_next_ball, get_lineup_display_data, parse_squad_data_input
+from constants import VENUE_LIST, TOSS_CHOICE_LIST, DB_URI
+from utils import get_over_string, get_current_run_rate, match_list_formatter, move_to_next_ball, get_lineup_display_data
 from db_utils import MongoDBConnector
 
 if "match_id" not in st.session_state:
@@ -18,9 +17,6 @@ def store_match_details(conn, venue, date, time, team_1_name, team_1_df, team_2_
     unique_match_id = "{}_{}_{}".format(str(team_1_name).replace(" ", "-").upper().strip(), 
                                         str(team_2_name).replace(" ", "-").upper().strip(), 
                                         date.strftime('%Y%m%d'))
-    
-    match_data_path = "{}/{}".format(BASE_DATA_PATH, unique_match_id)
-    create_path_if_not_exists(match_data_path)
     
     match_details = [{
         "match_id": unique_match_id, 
@@ -56,9 +52,9 @@ st.write("#### Welcome to Cricket Tagging Tool!")
 tab_1, tab_2 = st.tabs(["Select From Existing Games", "Start A New Match"])
 
 with tab_1:
-    if os.path.exists(MATCH_DETAILS_PATH):
-        matches = pd.DataFrame(connector.get_matches())
-        match_id_list = matches.match_id.unique().tolist()
+    matches_list = connector.get_matches()
+    if matches_list is not None and len(matches_list) > 0:
+        match_id_list = list(set([x["match_id"] for x in matches_list]))
     else:
         match_id_list = []
     match_id_in = st.selectbox("Select a Match to View Details/Score:", match_id_list, index=None, 

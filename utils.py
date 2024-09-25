@@ -18,13 +18,6 @@ def store_data_on_local_csv(store_path, df):
         df.to_csv(store_path, index=False)
 
 
-@st.cache_data
-def get_squad_details():
-    if os.path.exists(SQUADS_PATH):
-        return pd.read_csv(SQUADS_PATH)
-    return None
-        
-
 def match_list_formatter(match_id_str):
     if match_id_str is not None:
         splits = match_id_str.split("_")
@@ -86,6 +79,3 @@ def get_lineup_display_data(squads, team_name):
         }
     return team_squad, column_config
 
-
-def parse_squad_data_input(df):
-    return df[df["playing"]][[""]]

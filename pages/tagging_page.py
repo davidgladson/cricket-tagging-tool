@@ -4,7 +4,7 @@ import os
 
 from constants import EXTRAS_LIST, WICKET_TYPE_LIST, SHOT_TYPE_OPTIONS, DB_URI
 
-from utils import store_data_on_local_csv, get_over_string, get_current_run_rate
+from utils import get_over_string, get_current_run_rate
 
 from db_utils import MongoDBConnector
 
