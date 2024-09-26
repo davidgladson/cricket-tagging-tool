@@ -85,7 +85,7 @@ def parse_extras_data(extras_type_input, extras_runs_input):
 
 def save_and_next_ball(conn, over_num, ball_num,
                        batting_team_name, batter_name, batter_id, non_striker_name, non_striker_id, 
-                       bowling_team_name, bowler_name, bowler_id,
+                       bowling_team_name, bowler_name, bowler_id, ball_speed,
                        batter_runs, shot_type, is_extras, extras_type, extras_runs, 
                        is_wicket, wicket_type, out_batter, fielder_name):
     
@@ -113,6 +113,7 @@ def save_and_next_ball(conn, over_num, ball_num,
         "bowling_team": bowling_team_name, 
         "bowler_id": int(bowler_id),
         "bowler_name": bowler_name, 
+        "ball_speed": ball_speed,
         "runs_scored": total_ball_runs,
         "batter_runs": batter_runs, 
         "shot_type": shot_type,
@@ -243,8 +244,14 @@ with col_3:
     bowler_name_input = st.selectbox("Bowler:", bowler_list, index=None)
     if bowler_name_input is not None:
         bowler_id_input = players_data_fetched[players_data_fetched["player_name"] == bowler_name_input]["player_id"].iloc[0]
+        is_ball_speed_input = st.checkbox("Log Ball Speed?", value=False)
+        if is_ball_speed_input:
+            ball_speed_input = st.slider("Ball Speed:", min_value=40.0, max_value=160.0, step=0.5, value=None)
+        else:
+            ball_speed_input = None
     else:
         bowler_id_input = None
+        ball_speed_input = None
 
 with col_4:
     batter_runs_input = st.number_input("Batter Runs", value=0)
@@ -301,7 +308,7 @@ with col_6:
     if st.button("Save and Next"):
         save_and_next_ball(connector, over_num_input, ball_num_input, 
                            batting_team, batter_name_input, batter_id_input, non_striker_name_input, non_striker_id_input, 
-                           bowling_team, bowler_name_input, bowler_id_input,
+                           bowling_team, bowler_name_input, bowler_id_input, ball_speed_input,
                            batter_runs_input, shot_type_input, is_extras_input, extras_type_input, extras_runs_input, 
                            is_wicket_input, wicket_type_input, out_batter_input, fielder_name_input)
         st.rerun()
