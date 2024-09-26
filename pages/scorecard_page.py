@@ -231,6 +231,7 @@ def generate_bowler_stats(df, innings_num):
         'wides': 'Wide Balls',
         'no_balls': 'No Balls'
     }, inplace=True)
+    bowler_stats.drop(columns=['bowls_bowled'])
     byes = df_innings['byes_runs'].sum()
     leg_byes = df_innings['leg_byes_runs'].sum()
     return bowler_stats,byes,leg_byes
