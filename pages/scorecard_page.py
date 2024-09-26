@@ -1,17 +1,28 @@
 import streamlit as st
 import pandas as pd
 
+from db_utils import MongoDBConnector
+
+from constants import DB_URI
+
 st.set_page_config(
     page_title="Scorecard View",
     initial_sidebar_state="collapsed"
 )
 
+@st.cache_resource
+def connect_db(db_uri):
+    return MongoDBConnector(DB_URI=db_uri)
+
+connector = connect_db(DB_URI)
+
 st.write("# This is Scorecard View!")
-if st.button("Home"):
-    st.switch_page("home_page.py")
+if st.button("Tagging Home"):
+    st.switch_page("pages/tagging_home_page.py")
 current_match = st.session_state.match_id
-df = pd.read_csv(f"data/{current_match}/ball_by_ball.csv")
-match_details = pd.read_csv("data/match_details.csv")
+match_details = connector.get_single_match_details(st.session_state.match_id)
+df = pd.DataFrame(match_details.get("ball_by_ball_data", []))
+
 
 # def get_current_scores(match_details,df):
     
@@ -182,11 +193,11 @@ def generate_scorecard(df, innings_num):
     })
 
     # Display wickets type and score at which the batter got out
-    wicket_info = df_innings[df_innings['is_wicket'] == True][['batter_name', 'wicket_type', 'cumulative_score']]
+    wicket_info = df_innings[df_innings['is_wicket'] == True][['batter_name', 'wicket_type', 'current_runs']]
     wicket_info = wicket_info.rename(columns={
         'batter_name': 'Batter Name',
         'wicket_type': 'Wicket Type',
-        'cumulative_score': 'Score at Wicket'
+        'current_runs': 'Score at Wicket'
     })
 
     return batter_scores, wicket_info
@@ -231,7 +242,7 @@ def generate_bowler_stats(df, innings_num):
         'wides': 'Wide Balls',
         'no_balls': 'No Balls'
     }, inplace=True)
-    bowler_stats.drop(columns=['bowls_bowled'])
+    bowler_stats.drop(columns=['balls_bowled'], inplace=True)
     byes = df_innings['byes_runs'].sum()
     leg_byes = df_innings['leg_byes_runs'].sum()
     return bowler_stats,byes,leg_byes
