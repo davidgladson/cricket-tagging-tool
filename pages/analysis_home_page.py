@@ -24,11 +24,11 @@ if not check_password():
 
 
 st.title('WT20I Performance Analysis Portal')
-pdf = pd.read_csv("Dataset/Mydataset.csv",low_memory=False)
-idf = pd.read_csv("Dataset/lifesaver_bat.csv",low_memory=False)
-info_df=pd.read_csv("Dataset/player_info_k.csv",low_memory=False)
-bpdf=pd.read_csv("Dataset/Mydataset.csv",low_memory=False)
-bidf=pd.read_csv("Dataset/lifesaver_bowl.csv",low_memory=False)
+pdf = pd.read_csv("Analysis_datasets/Mydataset.csv",low_memory=False)
+idf = pd.read_csv("Analysis_datasets/lifesaver_bat.csv",low_memory=False)
+info_df=pd.read_csv("Analysis_datasets/player_info_k.csv",low_memory=False)
+bpdf=pd.read_csv("Analysis_datasets/Mydataset.csv",low_memory=False)
+bidf=pd.read_csv("Analysis_datasets/lifesaver_bowl.csv",low_memory=False)
 info_df=info_df.rename(columns={'Player':'Player_name'})
 pdf[['noballs', 'wides','byes','legbyes','penalty']] = pdf[['noballs', 'wides','byes','legbyes','penalty']].fillna(0).astype(int)
 pdf['valid_ball'] = pdf.apply(lambda x: 1 if (x['wides'] == 0 and x['noballs'] == 0) else 0, axis=1)
