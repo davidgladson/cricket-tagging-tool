@@ -8,6 +8,25 @@ from utils import get_over_string, get_current_run_rate
 
 from db_utils import MongoDBConnector
 
+
+st.set_page_config(
+    page_title="Tagging Page",
+    initial_sidebar_state="collapsed", 
+    layout="wide"
+)
+
+# Password check function
+def check_password():
+    if st.session_state.get("password_correct", False):
+        return True
+
+    st.error("Unauthorized access! Please login from the main page.")
+    return False
+
+# Check if the password is correct before allowing access to this page
+if not check_password():
+    st.stop()
+
 if "runs" not in st.session_state:
     st.session_state.runs = 0
     
@@ -141,11 +160,6 @@ def save_and_next_ball(conn, over_num, ball_num,
         st.session_state.over_ball_ctr += 1
     
 
-st.set_page_config(
-    page_title="Tagging Page",
-    initial_sidebar_state="collapsed", 
-    layout="wide"
-)
 
 @st.cache_resource
 def connect_db(db_uri):

@@ -5,6 +5,20 @@ from db_utils import MongoDBConnector
 
 from constants import DB_URI
 
+
+
+# Password check function
+def check_password():
+    if st.session_state.get("password_correct", False):
+        return True
+
+    st.error("Unauthorized access! Please login from the main page.")
+    return False
+
+# Check if the password is correct before allowing access to this page
+if not check_password():
+    st.stop()
+
 st.set_page_config(
     page_title="Scorecard View",
     initial_sidebar_state="collapsed"
@@ -83,65 +97,153 @@ def get_match_stats(df):
         }
     }
 
-
 def get_current_stats(df):
+    # Get the latest row to find the current batter and non-striker
     latest_stat = df.iloc[-1]
-    current_batters = latest_stat[['batter_name','non_striker_name']].values
-    df_innings_no_wide = df[df['extras_type'] != 'Wide']
-    batter_stats = df_innings_no_wide.groupby('batter_name').agg({'batter_runs':'sum', 'ball_id':'count'}).reset_index()
-    current_batter_stats = batter_stats[batter_stats['batter_name'].isin(current_batters)]
-
- 
+    current_batters = latest_stat[['batter_name', 'non_striker_name']].values
     
+    # Filter out wide balls to calculate stats properly
+    df_innings_no_wide = df[df['extras_type'] != 'Wide']
+    
+    # Calculate stats for batters who faced balls
+    batter_stats = df_innings_no_wide.groupby('batter_name').agg({
+        'batter_runs': 'sum', 
+        'ball_id': 'count'
+    }).reset_index()
+
+    # Create a DataFrame for the current batters (striker and non-striker)
+    current_batters_df = pd.DataFrame(current_batters, columns=['batter_name']).drop_duplicates()
+
+    # Perform a left join to include batters who haven't faced a ball (non-striker or those who didn't face)
+    current_batter_stats = pd.merge(current_batters_df, batter_stats, on='batter_name', how='left').fillna({
+        'batter_runs': 0,   # Set default runs to 0 for batters who haven't faced a ball
+        'ball_id': 0        # Set default balls faced to 0 for batters who haven't faced a ball
+    })
+    
+    # Get the latest two bowlers
     current_bowlers = df[['bowler_id', 'bowler_name']].drop_duplicates(subset='bowler_id', keep='last').tail(2)
 
-    
+    # Filter out wides and no balls to calculate valid deliveries
     valid_balls_df = df[(df['extras_type'] != 'Wide') & (df['extras_type'] != 'No Ball')]
-
     
+    # Exclude byes and leg byes for proper bowler stats
     df_no_byes_legbyes = df[~df['extras_type'].isin(['Byes', 'Leg Byes'])]
-
-    # Calculate bowler stats
+    # Calculate bowler stats (runs conceded, etc.)
     bowler_stats = df_no_byes_legbyes.groupby('bowler_name').agg({
-        'runs_scored': 'sum', 
+        'runs_scored': 'sum'
     }).reset_index()
 
-
+    # Calculate ball count and wickets for bowlers
     bowler_ball_stats = valid_balls_df.groupby('bowler_name').agg({
-        'ball_id': 'count',  
-        'is_wicket': 'sum'   
+        'ball_id': 'count',
+        'is_wicket': 'sum'
     }).reset_index()
 
-    
+    # Merge the bowler stats with the ball stats
     bowler_stats = bowler_stats.merge(bowler_ball_stats, on='bowler_name')
 
-    
+    # Calculate overs bowled by bowlers
     bowler_stats['overs_bowled'] = bowler_stats['ball_id'] // 6
     bowler_stats['balls_in_over'] = bowler_stats['ball_id'] % 6
     bowler_stats['overs_bowled'] = bowler_stats.apply(lambda row: f"{row['overs_bowled']}.{row['balls_in_over']}", axis=1)
 
-    
+    # Filter stats for the current bowlers (latest two)
     current_bowler_stats = bowler_stats[bowler_stats['bowler_name'].isin(current_bowlers['bowler_name'])]
     
-    return current_batter_stats,current_bowler_stats
-
+    return current_batter_stats, current_bowler_stats
 
 #===============================================================================================================
 #===============================================================================================================
 
 
+# def generate_scorecard(df, innings_num):
+#     # Filter data by innings
+#     df_innings = df[df['innings_num'] == innings_num]
+
+#     df_innings['batter_order'] = df_innings.groupby('batter_name').cumcount() + 1
+#     current_score = df.iloc[-1]['current_runs']
+#     df_innings['cumulative_score'] = current_score
+#     first_appearance = df_innings.drop_duplicates('batter_name', keep='first')[['batter_name', 'batter_order']]
+
+#     df_innings_no_wide = df_innings[df_innings['extras_type'] != 'Wide']
+
+#     batter_scores = df_innings_no_wide.groupby('batter_name').agg(
+#         how_out=('is_wicket', lambda x: df_innings.loc[x.index, 'wicket_type'].dropna().iloc[0] if x.sum() > 0 else 'not out'),
+#         total_runs=('batter_runs', 'sum'),
+#         balls_faced=('ball_id', 'count'),
+#         dot_balls=('batter_runs', lambda x: (x == 0).sum()),
+#         singles=('batter_runs', lambda x: (x == 1).sum()),
+#         fours=('batter_runs', lambda x: (x == 4).sum()),
+#         sixes=('batter_runs', lambda x: (x == 6).sum())
+#     ).reset_index()
+
+    
+#     batter_scores = pd.merge(first_appearance, batter_scores, on='batter_name')
+    
+    
+#     batter_scores = batter_scores.sort_values('batter_order').drop(columns=['batter_order'])
+
+    
+#     batter_scores.columns = ['batter_name', 'how_out', 'total_runs', 'balls_faced', 'dot_balls', 'singles', 'fours', 'sixes']
+    
+    
+#     batter_scores['Strike Rate'] = (round(batter_scores['total_runs'] / batter_scores['balls_faced'], 2)) * 100
+    
+   
+#     extras = df_innings[['wide_runs', 'no_ball_runs', 'byes_runs', 'leg_byes_runs']].sum().sum()  # Summing all extras
+#     extras_row = pd.DataFrame([['Extras', extras, '-', '-', '-', '-', '-', '-','-']], columns=batter_scores.columns)
+
+    
+#     total_score = df_innings['runs_scored'].sum()
+#     total_row = pd.DataFrame([['Total', total_score, '-', '-', '-', '-', '-', '-','-']], columns=batter_scores.columns)
+
+   
+#     batter_scores = pd.concat([batter_scores, extras_row, total_row], ignore_index=True)
+    
+    
+#     batter_scores['batter_name'] = batter_scores.apply(
+#         lambda row: row['batter_name'] + '*' if row['how_out'] == 'not out' else row['batter_name'], axis=1
+#     )
+
+#     batter_scores = batter_scores.rename(columns={
+#         'batter_name': 'Batter Name',
+#         'how_out': 'How Out',
+#         'total_runs': 'Total Runs',
+#         'balls_faced': 'Balls Faced',
+#         'dot_balls': 'Dot Balls',
+#         'singles': '1s',
+#         'fours': '4s',
+#         'sixes': '6s'
+#     })
+
+#     # Display wickets type and score at which the batter got out
+#     wicket_info = df_innings[df_innings['is_wicket'] == True][['batter_name', 'wicket_type', 'current_runs']]
+#     wicket_info = wicket_info.rename(columns={
+#         'batter_name': 'Batter Name',
+#         'wicket_type': 'Wicket Type',
+#         'current_runs': 'Score at Wicket'
+#     })
+
+#     return batter_scores, wicket_info
 def generate_scorecard(df, innings_num):
     # Filter data by innings
     df_innings = df[df['innings_num'] == innings_num]
 
-    
+    # Get the batter order based on their appearance
     df_innings['batter_order'] = df_innings.groupby('batter_name').cumcount() + 1
     current_score = df.iloc[-1]['current_runs']
     df_innings['cumulative_score'] = current_score
-    first_appearance = df_innings.drop_duplicates('batter_name', keep='first')[['batter_name', 'batter_order']]
+
+    # Track first appearance of both batter and non-striker
+    first_appearance_batters = df_innings.drop_duplicates('batter_name', keep='first')[['batter_name', 'batter_order']]
+    first_appearance_non_strikers = df_innings.drop_duplicates('non_striker_name', keep='first')[['non_striker_name']].rename(columns={'non_striker_name': 'batter_name'})
+
+    # Combine batter and non-striker appearances
+    all_batters = pd.concat([first_appearance_batters, first_appearance_non_strikers]).drop_duplicates('batter_name').reset_index(drop=True)
 
     df_innings_no_wide = df_innings[df_innings['extras_type'] != 'Wide']
 
+    # Generate batter scores, but use a left join to include all batters
     batter_scores = df_innings_no_wide.groupby('batter_name').agg(
         how_out=('is_wicket', lambda x: df_innings.loc[x.index, 'wicket_type'].dropna().iloc[0] if x.sum() > 0 else 'not out'),
         total_runs=('batter_runs', 'sum'),
@@ -152,35 +254,42 @@ def generate_scorecard(df, innings_num):
         sixes=('batter_runs', lambda x: (x == 6).sum())
     ).reset_index()
 
-    
-    batter_scores = pd.merge(first_appearance, batter_scores, on='batter_name')
-    
-    
+    # Merge with all batters (including non-strikers who may not have faced balls)
+    batter_scores = pd.merge(all_batters, batter_scores, on='batter_name', how='left').fillna({
+        'how_out': 'not out',
+        'total_runs': 0,
+        'balls_faced': 0,
+        'dot_balls': 0,
+        'singles': 0,
+        'fours': 0,
+        'sixes': 0
+    })
+
+    # Sort based on batter order and drop unnecessary column
     batter_scores = batter_scores.sort_values('batter_order').drop(columns=['batter_order'])
 
-    
+    # Set up column names
     batter_scores.columns = ['batter_name', 'how_out', 'total_runs', 'balls_faced', 'dot_balls', 'singles', 'fours', 'sixes']
-    
-    
+
+    # Calculate Strike Rate
     batter_scores['Strike Rate'] = (round(batter_scores['total_runs'] / batter_scores['balls_faced'], 2)) * 100
-    
-   
+
+    # Add extras and total rows
     extras = df_innings[['wide_runs', 'no_ball_runs', 'byes_runs', 'leg_byes_runs']].sum().sum()  # Summing all extras
-    extras_row = pd.DataFrame([['Extras', extras, '-', '-', '-', '-', '-', '-','-']], columns=batter_scores.columns)
+    extras_row = pd.DataFrame([['Extras', extras, '-', '-', '-', '-', '-', '-', '-']], columns=batter_scores.columns)
 
-    
     total_score = df_innings['runs_scored'].sum()
-    total_row = pd.DataFrame([['Total', total_score, '-', '-', '-', '-', '-', '-','-']], columns=batter_scores.columns)
+    total_row = pd.DataFrame([['Total', total_score, '-', '-', '-', '-', '-', '-', '-']], columns=batter_scores.columns)
 
-   
+    # Concatenate batter scores with extras and total
     batter_scores = pd.concat([batter_scores, extras_row, total_row], ignore_index=True)
-    
-    
+
+    # Mark batters as 'not out' if applicable
     batter_scores['batter_name'] = batter_scores.apply(
         lambda row: row['batter_name'] + '*' if row['how_out'] == 'not out' else row['batter_name'], axis=1
     )
 
-    
+    # Rename columns for final output
     batter_scores = batter_scores.rename(columns={
         'batter_name': 'Batter Name',
         'how_out': 'How Out',
@@ -202,6 +311,7 @@ def generate_scorecard(df, innings_num):
 
     return batter_scores, wicket_info
 
+
 def generate_bowler_stats(df, innings_num):
     df_innings = df[df['innings_num'] == innings_num]
 
@@ -210,7 +320,7 @@ def generate_bowler_stats(df, innings_num):
     maidens_df['is_maiden'] = maidens_df['total_runs_per_over'] == 0
     maidens = maidens_df.groupby('bowler_name')['is_maiden'].sum().reset_index()
 
-    
+    # Aggregate bowler stats
     bowler_stats = df_innings.groupby('bowler_name').agg(
         balls_bowled=('ball_id', 'count'),
         wickets=('is_wicket', 'sum'),
@@ -218,23 +328,23 @@ def generate_bowler_stats(df, innings_num):
         no_balls=('no_ball_runs', 'sum')
     ).reset_index()
 
-   
+    # Calculate legitimate balls (excluding wides and no-balls)
     legit_balls = bowler_stats['balls_bowled'] - (bowler_stats['wides'] + bowler_stats['no_balls'])
-    bowler_stats['overs'] = legit_balls // 6 + (legit_balls % 6) / 10
+    bowler_stats['overs'] = legit_balls // 6 + (legit_balls % 6) / 10  # Calculate overs with remaining balls as decimal
 
-    ball_with_not_byes =df_innings[~df_innings['extras_type'].isin(['Byes', 'Leg Byes'])]
-    
+    # Filter out byes and leg byes for runs conceded
+    ball_with_not_byes = df_innings[~df_innings['extras_type'].isin(['Byes', 'Leg Byes'])]
     runs_conceded = ball_with_not_byes.groupby('bowler_name')['runs_scored'].sum().reset_index()
     runs_conceded.rename(columns={'runs_scored': 'runs_conceded'}, inplace=True)
 
+    # Merge runs conceded and maidens into bowler stats
     bowler_stats = pd.merge(bowler_stats, runs_conceded, on='bowler_name', how='left')
-    # Merge maidens
     bowler_stats = pd.merge(bowler_stats, maidens, on='bowler_name', how='left')
 
-   
+    # Calculate economy rate from legitimate balls only (runs_conceded / overs)
     bowler_stats['economy'] = bowler_stats['runs_conceded'] / bowler_stats['overs']
-
-    # Rearrange columns
+    
+    # Rearrange columns and clean up
     bowler_stats = bowler_stats[['bowler_name', 'overs', 'is_maiden', 'balls_bowled', 'runs_conceded', 'wickets', 'wides', 'no_balls', 'economy']]
     bowler_stats.rename(columns={
         'bowler_name': 'Bowler Name',
@@ -242,10 +352,16 @@ def generate_bowler_stats(df, innings_num):
         'wides': 'Wide Balls',
         'no_balls': 'No Balls'
     }, inplace=True)
+
+    # Drop balls_bowled if not needed for the output
     bowler_stats.drop(columns=['balls_bowled'], inplace=True)
+
+    # Calculate total byes and leg byes for the innings
     byes = df_innings['byes_runs'].sum()
     leg_byes = df_innings['leg_byes_runs'].sum()
-    return bowler_stats,byes,leg_byes
+
+    return bowler_stats, byes, leg_byes
+
 
 innings_options = df['innings_num'].unique()
 
