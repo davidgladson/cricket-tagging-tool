@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-
+#============================================Password Check Function===================
 # Password check function
 def check_password():
     if st.session_state.get("password_correct", False):
@@ -25,6 +25,8 @@ def check_password():
 # Check if the password is correct before allowing access to this page
 if not check_password():
     st.stop()
+#============================================Password Check Function===================
+
 
 if "match_id" not in st.session_state:
     st.session_state.match_id = None
@@ -52,7 +54,6 @@ def store_match_details(conn, venue, date, time, team_1_name, team_1_df, team_2_
     player_data_df = pd.concat([team_1_df[team_1_df["playing"]], team_2_df[team_2_df["playing"]]])
     player_data_df["match_id"] = unique_match_id
     player_data_df.drop(columns=["_id"], inplace=True)
-    print(player_data_df)
     conn.add_new_lineups(player_data_df.to_dict('records'))
 
 @st.cache_resource

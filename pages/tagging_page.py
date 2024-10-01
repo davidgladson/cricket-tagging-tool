@@ -15,6 +15,7 @@ st.set_page_config(
     layout="wide"
 )
 
+#============================================Password Check Function===================
 # Password check function
 def check_password():
     if st.session_state.get("password_correct", False):
@@ -26,6 +27,8 @@ def check_password():
 # Check if the password is correct before allowing access to this page
 if not check_password():
     st.stop()
+    
+#============================================Password Check Function===================
 
 if "runs" not in st.session_state:
     st.session_state.runs = 0
@@ -68,6 +71,8 @@ def reset_match_state_for_new_inning(new_inning_num):
     st.session_state.over_num = 1
     st.session_state.ball_num = 1
     st.session_state.over_ball_ctr = 1
+    st.session_state.prev_over_num = 0
+    st.session_state.prev_ball_num = 0
     st.session_state.runs = 0
     st.session_state.wickets = 0
     st.session_state.out_batters = set()

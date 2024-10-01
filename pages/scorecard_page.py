@@ -6,7 +6,7 @@ from db_utils import MongoDBConnector
 from constants import DB_URI
 
 
-
+#============================================Password Check Function===================
 # Password check function
 def check_password():
     if st.session_state.get("password_correct", False):
@@ -18,6 +18,7 @@ def check_password():
 # Check if the password is correct before allowing access to this page
 if not check_password():
     st.stop()
+#============================================Password Check Function===================
 
 st.set_page_config(
     page_title="Scorecard View",
