@@ -159,7 +159,7 @@ def save_and_next_ball(conn, over_num, ball_num,
     }]
     conn.add_new_bbb(bbb_data_list)
     
-    if not is_extras:
+    if not is_extras or (is_extras and extras_type in ["Byes", "Leg Byes"]):
         st.session_state.prev_over_num, st.session_state.prev_ball_num = st.session_state.over_num, st.session_state.ball_num
         st.session_state.over_num, st.session_state.ball_num, \
             st.session_state.over_ball_ctr = move_to_next_ball(over_num, ball_num, st.session_state.over_ball_ctr)
@@ -267,7 +267,7 @@ with col_3:
         bowler_id_input = players_data_fetched[players_data_fetched["player_name"] == bowler_name_input]["player_id"].iloc[0]
         is_ball_speed_input = st.checkbox("Log Ball Speed?", value=False)
         if is_ball_speed_input:
-            ball_speed_input = st.number_input("Ball Speed: ", value=None)
+            ball_speed_input = st.number_input("Ball Speed: ", value=None, min_value=0.0)
         else:
             ball_speed_input = None
     else:
@@ -279,7 +279,7 @@ with col_4:
     length_input = st.selectbox("Ball Length:", BALL_LENGTH_OPTIONS, index=None)
 
 with col_5:
-    batter_runs_input = st.number_input("Batter Runs", value=0)
+    batter_runs_input = st.number_input("Batter Runs", value=0, min_value=0)
     
     shot_type_input = st.selectbox("Shot Type:", SHOT_TYPE_OPTIONS, index=None)
 
@@ -287,7 +287,7 @@ with col_6:
     is_extras_input = st.checkbox("Extras?", value=False)
     if is_extras_input:
         extras_type_input = st.selectbox("Extra Type:", EXTRAS_LIST, index=None)
-        extras_runs_input = st.number_input("Extra Runs", value=0)
+        extras_runs_input = st.number_input("Extra Runs", value=0, min_value=0)
     else:
         extras_type_input = None
         extras_runs_input = 0
