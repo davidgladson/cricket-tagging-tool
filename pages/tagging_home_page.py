@@ -128,7 +128,7 @@ with tab_1:
         current_inning_num_index = st.session_state.get("innings_num", None)
         if current_inning_num_index is not None:
             current_inning_num_index = int(current_inning_num_index) - 1
-        innings_num_in= st.selectbox("Select Innings: ", [1,2,3,4], index=current_inning_num_index)
+        innings_num_in= st.selectbox("Select Innings: ", [1,2,3,4], index=current_inning_num_index, disabled=True)
     
     with sub_col_2:
         if st.button("Start/Resume Scoring"):

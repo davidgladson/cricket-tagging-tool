@@ -38,6 +38,9 @@ class MongoDBConnector(object):
         
         match_details = self.match_list_collection.find_one(filter_in)
         
+        if match_details is None:
+            return None
+        
         bbb_data = self.get_data(self.bbb_data_collection, filter_in=filter_in)
         bbb_data.sort(key=lambda x: x["ball_id"])
         
@@ -57,10 +60,12 @@ class MongoDBConnector(object):
         
     def add_new_bbb(self, bbb_list):
         self.bbb_data_collection.insert_many(bbb_list)
-    
-    
         
-    
+    def fully_reset_db(self):
+        self.bbb_data_collection.delete_many({})
+        self.lineups_collection.delete_many({})
+        self.match_list_collection.delete_many({})
+        
 
 if __name__ == "__main__":
     from constants import DB_URI
@@ -71,4 +76,9 @@ if __name__ == "__main__":
     print(connector.get_squads())
     print(connector.get_matches())
     print(connector.get_single_match_details("INDIA-WOMEN_PAKISTAN-WOMEN_20240924"))
+    
+    DELETE = False
+    
+    if DELETE:
+        connector.fully_reset_db()
 
