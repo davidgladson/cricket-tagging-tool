@@ -12,7 +12,8 @@ SHOT_TYPE_OPTIONS = ["DEFENDED", "CUT_SHOT", "FLICK", "ON_DRIVE", "PULL", "LEG_G
                      "LEFT_ALONE", "COVER_DRIVE", "STRAIGHT_DRIVE", "SLOG_SHOT", "DAB", "UPPER_CUT", "SWEEP_SHOT", "HOOK", 
                      "REVERSE_SWEEP", "VERTICAL_FORWARD_ATTACK", "PULL_HOOK_ON_BACK_FOOT", "BACK_DEFENCE", "SWEEP", "PUSH_SHOT", 
                      "FORWARD_DEFENCE", "NO_SHOT", "CUT_SHOT_ON_BACK_FOOT", "SLOG_SWEEP", "PADDLE_SWEEP", "RAMP", "REVERSE_PULL", 
-                     "DROP_AND_RUN", "PADDLE_AWAY", "REVERSE_SCOOP", "LATE_CUT"]
+                     "DROP_AND_RUN", "PADDLE_AWAY", "REVERSE_SCOOP", "LATE_CUT", "MISSED", "STEP_OUT_AND_DRIVE", "STEP_OUT_AND_LOFT", 
+                     "STRAIGHT_TO_BOWLER"]
 
 BALL_LINE_OPTIONS = ["On Stumps", "Outside Off Stump", "Outside Leg Stump", "Wide Outside Off Stump", "Wide Outside Leg Stump"]
 BALL_LENGTH_OPTIONS = ["Short", "Short of Good Length", "Good Length", "Full", "Yorker", "Full Toss"]
