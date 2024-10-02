@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 
-from constants import EXTRAS_LIST, WICKET_TYPE_LIST, SHOT_TYPE_OPTIONS, DB_URI
+from constants import EXTRAS_LIST, WICKET_TYPE_LIST, SHOT_TYPE_OPTIONS, DB_URI, BALL_LINE_OPTIONS, BALL_LENGTH_OPTIONS
 
 from utils import get_over_string, get_current_run_rate
 
@@ -109,7 +109,7 @@ def parse_extras_data(extras_type_input, extras_runs_input):
 
 def save_and_next_ball(conn, over_num, ball_num,
                        batting_team_name, batter_name, batter_id, non_striker_name, non_striker_id, 
-                       bowling_team_name, bowler_name, bowler_id, ball_speed,
+                       bowling_team_name, bowler_name, bowler_id, ball_speed, line, length,
                        batter_runs, shot_type, is_extras, extras_type, extras_runs, 
                        is_wicket, wicket_type, out_batter, fielder_name):
     
@@ -138,6 +138,8 @@ def save_and_next_ball(conn, over_num, ball_num,
         "bowler_id": int(bowler_id),
         "bowler_name": bowler_name, 
         "ball_speed": ball_speed,
+        "ball_line": line, 
+        "ball_length": length,
         "runs_scored": total_ball_runs,
         "batter_runs": batter_runs, 
         "shot_type": shot_type,
@@ -236,7 +238,7 @@ with col_1:
     
 st.divider()
     
-col_1, col_2, col_3, col_4, col_5, col_6 = st.columns(6)    
+col_1, col_2, col_3, col_4, col_5, col_6, col_7 = st.columns(7)    
 
 with col_1:
     over_num_input = st.number_input("Over Number:", value=st.session_state.over_num, disabled=True)
@@ -265,7 +267,7 @@ with col_3:
         bowler_id_input = players_data_fetched[players_data_fetched["player_name"] == bowler_name_input]["player_id"].iloc[0]
         is_ball_speed_input = st.checkbox("Log Ball Speed?", value=False)
         if is_ball_speed_input:
-            ball_speed_input = st.slider("Ball Speed:", min_value=40.0, max_value=160.0, step=0.5, value=None)
+            ball_speed_input = st.number_input("Ball Speed: ", value=None)
         else:
             ball_speed_input = None
     else:
@@ -273,20 +275,24 @@ with col_3:
         ball_speed_input = None
 
 with col_4:
+    line_input = st.selectbox("Ball Line:", BALL_LINE_OPTIONS, index=None)
+    length_input = st.selectbox("Ball Length:", BALL_LENGTH_OPTIONS, index=None)
+
+with col_5:
     batter_runs_input = st.number_input("Batter Runs", value=0)
     
     shot_type_input = st.selectbox("Shot Type:", SHOT_TYPE_OPTIONS, index=None)
 
-with col_5:
+with col_6:
     is_extras_input = st.checkbox("Extras?", value=False)
     if is_extras_input:
         extras_type_input = st.selectbox("Extra Type:", EXTRAS_LIST, index=None)
-        extras_runs_input = st.number_input("Extra Runs", value=None)
+        extras_runs_input = st.number_input("Extra Runs", value=0)
     else:
         extras_type_input = None
         extras_runs_input = 0
     
-with col_6:
+with col_7:
     is_wicket_input = st.checkbox("Wicket?", value=False)
     if is_wicket_input:
         
@@ -327,7 +333,7 @@ with col_6:
     if st.button("Save and Next"):
         save_and_next_ball(connector, over_num_input, ball_num_input, 
                            batting_team, batter_name_input, batter_id_input, non_striker_name_input, non_striker_id_input, 
-                           bowling_team, bowler_name_input, bowler_id_input, ball_speed_input,
+                           bowling_team, bowler_name_input, bowler_id_input, ball_speed_input, line_input, length_input,
                            batter_runs_input, shot_type_input, is_extras_input, extras_type_input, extras_runs_input, 
                            is_wicket_input, wicket_type_input, out_batter_input, fielder_name_input)
         st.rerun()

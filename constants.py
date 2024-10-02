@@ -14,6 +14,9 @@ SHOT_TYPE_OPTIONS = ["DEFENDED", "CUT_SHOT", "FLICK", "ON_DRIVE", "PULL", "LEG_G
                      "FORWARD_DEFENCE", "NO_SHOT", "CUT_SHOT_ON_BACK_FOOT", "SLOG_SWEEP", "PADDLE_SWEEP", "RAMP", "REVERSE_PULL", 
                      "DROP_AND_RUN", "PADDLE_AWAY", "REVERSE_SCOOP", "LATE_CUT"]
 
+BALL_LINE_OPTIONS = ["On Stumps", "Outside Off Stump", "Outside Leg Stump", "Wide Outside Off Stump", "Wide Outside Leg Stump"]
+BALL_LENGTH_OPTIONS = ["Short", "Short of Good Length", "Good Length", "Full", "Yorker", "Full Toss"]
+
 # DB Details
 
 USERNAME = "tagging-app"
