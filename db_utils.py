@@ -1,4 +1,5 @@
 import pymongo
+import argparse
 
 from constants import DATABASE_NAME, SQUADS_COLLECTION, MATCH_LIST_COLLECTION, BALL_BY_BALL_DATA_COLLECTION, LINEUPS_COLLECTION
 
@@ -66,8 +67,18 @@ class MongoDBConnector(object):
         self.lineups_collection.delete_many({})
         self.match_list_collection.delete_many({})
         
+    def refresh_squads_data(self, squads_data_list):
+        self.squads_collection.delete_many({})
+        self.squads_collection.insert_many(squads_data_list)
+        
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--reset_db", action="store_true", help="Squad Updates to Push To DB or not")
+    
+    args = parser.parse_args()
+    reset_db = args.reset_db
+    
     from constants import DB_URI
     
     connector = MongoDBConnector(DB_URI=DB_URI)
@@ -77,8 +88,9 @@ if __name__ == "__main__":
     print(connector.get_matches())
     print(connector.get_single_match_details("INDIA-WOMEN_PAKISTAN-WOMEN_20240924"))
     
-    DELETE = False
+    ENABLE_DELETE = False 
     
-    if DELETE:
+    if ENABLE_DELETE and reset_db:
+        print("Deleting Tables...")
         connector.fully_reset_db()
 

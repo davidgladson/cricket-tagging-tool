@@ -17,6 +17,16 @@ SHOT_TYPE_OPTIONS = ["DEFENDED", "CUT_SHOT", "FLICK", "ON_DRIVE", "PULL", "LEG_G
 BALL_LINE_OPTIONS = ["On Stumps", "Outside Off Stump", "Outside Leg Stump", "Wide Outside Off Stump", "Wide Outside Leg Stump"]
 BALL_LENGTH_OPTIONS = ["Short", "Short of Good Length", "Good Length", "Full", "Yorker", "Full Toss"]
 
+BBB_DOWNLOADABLE_COLUMNS = ["match_id", "innings_num", "over_num", "ball_num", "ball_id",
+                            "batting_team", "batter_id", "batter_name", "batting_hand", "non_striker_id", "non_striker_name", 
+                            "bowling_team", "bowler_id", "bowler_name", "bowling_hand", "bowling_pace_spin", "bowling_style",
+                            "ball_speed", "ball_line", "ball_length", 
+                            "runs_scored", "batter_runs", "shot_type", 
+                            "is_extras", "extras_type", "extras_runs", 
+                            "wide_runs", "no_ball_runs", "byes_runs", "leg_byes_runs", 
+                            "is_wicket", "wicket_type", "out_batter", "fielder_name", 
+                            "current_runs", "current_wickets"]
+
 # DB Details
 
 USERNAME = "tagging-app"

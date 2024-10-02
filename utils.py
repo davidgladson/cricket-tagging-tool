@@ -2,7 +2,7 @@ import streamlit as st
 import os
 import pandas as pd
 
-from constants import SQUADS_PATH
+from constants import BBB_DOWNLOADABLE_COLUMNS
 
 @st.cache_data
 def create_path_if_not_exists(dir_name):
@@ -76,6 +76,30 @@ def get_lineup_display_data(squads, team_name):
         "bowling_style": None, 
         "primary_role": None, 
         "_id": None,
+        "age": None, 
+        "debut_year": None
         }
     return team_squad, column_config
 
+
+def prepare_download_bbb_data(conn, match_id):
+    match_details_fetched = conn.get_single_match_details(match_id)
+    
+    if match_details_fetched is None:
+        return pd.DataFrame()
+    
+    ball_by_ball_data = pd.DataFrame(match_details_fetched["ball_by_ball_data"])
+    lineups = pd.DataFrame(match_details_fetched["lineups"])
+    
+    bbb_batter_info = ball_by_ball_data.merge(lineups[["player_id", "player_name", "batting_hand"]], 
+                                              left_on=["batter_id", "batter_name"], 
+                                              right_on=["player_id", "player_name"])
+    
+    bbb_with_bowler_info = bbb_batter_info.merge(lineups[["player_id", "player_name", 
+                                                          "bowling_hand", "bowling_pace_spin", "bowling_style"]], 
+                                                 left_on=["bowler_id", "bowler_name"], 
+                                                 right_on=["player_id", "player_name"])
+    
+    bbb_downloadable = bbb_with_bowler_info[BBB_DOWNLOADABLE_COLUMNS]
+    
+    return bbb_downloadable

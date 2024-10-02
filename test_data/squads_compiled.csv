@@ -1,0 +1,151 @@
+player_id,player_name,team_name,batting_hand,bowling_hand,bowling_pace_spin,bowling_style,primary_role,age,debut_year
+372317,Harmanpreet Kaur,India Women,Right,Right,Pace,right arm medium fast,All-Rounder,35,2009.0
+597806,Smriti Mandhana,India Women,Left,Right,Spin,right arm off spin,Batter,28,2013.0
+1182523,Shafali Verma,India Women,Right,Right,Spin,right arm offbreak,Batter,20,2019.0
+597811,Deepti Sharma,India Women,Left,Right,Spin,right arm off break,All-Rounder,27,2014.0
+883405,Jemimah Rodrigues,India Women,Right,Right,Spin,right arm offbreak,Batter,24,2018.0
+1212830,Richa Ghosh,India Women,Right,Right,Pace,right arm medium,Wicketkeeper,20,2020.0
+960715,Yastika Bhatia,India Women,Left,Left,Spin,slow left arm orthodox,Wicketkeeper,24,2021.0
+883413,Pooja Vastrakar,India Women,Right,Right,Pace,right arm medium fast,All-Rounder,25,2018.0
+960867,Arundhati Reddy,India Women,Right,Right,Pace,right arm medium fast,Bowler,27,2018.0
+550687,Asha Sobhana,India Women,Right,Right,Spin,right arm legbreak googly,All-Rounder,33,2024.0
+961107,Dayalan Hemalatha,India Women,Right,Right,Spin,right arm off break,All-Rounder,30,2018.0
+960737,Radha Yadav,India Women,Right,Left,Spin,left arm orthodox,Bowler,24,2018.0
+960853,Renuka Singh Thakur,India Women,Right,Right,Pace,right arm medium fast,Bowler,28,2021.0
+960955,Sajeevan Sajana,India Women,Right,Right,Spin,right arm offbreak,All-Rounder,29,2024.0
+1289948,Shreyanka Patil,India Women,Right,Right,Spin,right arm offbreak,Bowler/All-Rounder,22,2023.0
+275486,Alyssa Healy,Australia Women,Right,Right,,right arm wicketkeeper,Wicketkeeper-Batter,34,2010.0
+388845,Darcie Brown,Australia Women,Right,Right,Pace,right arm fast,Bowler,21,2021.0
+858809,Ashleigh Gardner,Australia Women,Right,Right,Spin,right arm off break,All-Rounder,27,2016.0
+418423,Kim Garth,Australia Women,Right,Right,Pace,right arm medium fast,All-Rounder,28,2010.0
+381268,Grace Harris,Australia Women,Right,Right,Spin,right arm off break,All-Rounder,31,2015.0
+944393,Alana King,Australia Women,Right,,Spin,legbreak,All-Rounder,28,2021.0
+1176132,Phoebe Litchfield,Australia Women,Left,,Spin,legbreak,Batter,21,2022.0
+381311,Tahlia McGrath,Australia Women,Right,Right,Pace,right arm medium fast,All-Rounder,28,2016.0
+944373,Sophie Molineux,Australia Women,Left,Left,Spin,left arm orthodox,Bowler/All-Rounder,26,2018.0
+381258,Beth Mooney,Australia Women,Left,Right,Pace,right arm medium,Wicketkeeper-Batter,30,2016.0
+275487,Ellyse Perry,Australia Women,Right,Right,Pace,right arm fast medium/off spin,Bowler/All-Rounder,33,2007.0
+420314,Megan Schutt,Australia Women,Right,Right,Pace,right arm fast seam,Bowler,31,2012.0
+1071705,Annabel Sutherland,Australia Women,Right,Right,Pace,right arm fast seam,All-Rounder,22,2020.0
+1071711,Tayla Vlaeminck,Australia Women,Right,Right,Pace,right arm fast seam,Bowler,25,2018.0
+946057,Georgia Wareham,Australia Women,Right,Right,Spin,right arm leg spin,All-Rounder,25,2018.0
+358259,Heather Knight,England Women,Right,Right,Spin,right arm off spin,Batter,33,2009.0
+878025,Lauren Bell,England Women,Right,Right,Pace,right arm fast seam,Bowler,23,2022.0
+1022077,Maia Bouchier,England Women,Right,Right,Pace,right arm medium,Batter,25,2021.0
+1187120,Alice Capsey,England Women,Right,Right,Spin,right arm offbreak,All-Rounder,20,2022.0
+1039421,Charlie Dean,England Women,Right,Right,Spin,right arm offbreak,Bowler/All-Rounder,24,2021.0
+885815,Sophia Dunkley,England Women,Right,,Spin,legbreak,Batter,26,2018.0
+878039,Sophie Ecclestone,England Women,Right,Left,Spin,left arm orthodox,Bowler,25,2016.0
+886203,Danielle Gibson,England Women,Right,Right,Pace,right arm medium,Bowler/All-Rounder,23,2023.0
+885837,Sarah Glenn,England Women,Right,,Spin,legbreak,Bowler/All-Rounder,25,2019.0
+916037,Bess Heath,England Women,Right,Right,Pace,right arm medium,Wicketkeeper-Batter,23,2023.0
+515874,Amy Jones,England Women,Right,Right,Pace,right arm medium,Wicketkeeper-Batter,31,2013.0
+1195947,Freya Kemp,England Women,Left,Left,Pace,left arm medium,Bowler/All-Rounder,19,2022.0
+515905,Nat Sciver-Brunt,England Women,Right,Right,Pace,right arm medium,Bowler/All-Rounder,32,2013.0
+517577,Linsey Smith,England Women,Left,Left,Spin,left arm orthodox,Bowler,28,2018.0
+254168,Danni Wyatt,England Women,Right,Right,Spin,right arm offbreak,Batter,33,2010.0
+318853,Chamari Athapaththu,Sri Lanka Women,Left,Right,Spin,right arm off break,All-Rounder,34,2008.0
+371185,Hasini Perera,Sri Lanka Women,Left,Right,Pace,right arm medium fast,Batter,29,2014.0
+557839,Harshitha Samarawickrama,Sri Lanka Women,Left,Right,Pace,right arm slow medium,Batter,26,2016.0
+340004,Ama Kanchana,Sri Lanka Women,Right,Right,Pace,right arm fast medium,All-Rounder,33,2013.0
+371194,Inoshi Priyadharshini,Sri Lanka Women,Right,Right,Spin,right arm offbreak,Bowler,37,2014.0
+923703,Kavisha Dilhari,Sri Lanka Women,Right,Right,Spin,"right arm off break, legbreak",All-Rounder,23,2018.0
+493860,Anushka Sanjeewani,Sri Lanka Women,Right,,,nan,Wicketkeeper-Batter,34,2014.0
+557764,Nilakshi de Silva,Sri Lanka Women,Right,Right,Pace,right arm medium,All-Rounder,34,2013.0
+434844,Inoka Ranaweera,Sri Lanka Women,Left,Left,Spin,slow left arm orthodox,Bowler,38,2012.0
+631609,Sugandika Kumari,Sri Lanka Women,Left,Left,Spin,slow left arm orthodox,Bowler,33,2015.0
+557731,Achini Kulasuriya,Sri Lanka Women,Left,Right,Pace,right arm medium,Bowler,34,2015.0
+335236,Udeshika Prabodhani,Sri Lanka Women,Right,Left,Pace,left arm medium,Bowler,39,2009.0
+1290105,Vishmi Gunaratne,Sri Lanka Women,Right,Right,Pace,right arm medium fast,Batter,19,2021.0
+924289,Sachini Nisansala,Sri Lanka Women,Left,Left,Spin,slow left arm orthodox,Bowler,22,2021.0
+1427037,Shashini Gimhani,Sri Lanka Women,Right,Left,Spin,left arm wrist spin,Bowler,15,2024.0
+1144886,Fatima Sana,Pakistan Women,Right,Right,Pace,right arm medium fast,All-Rounder,22,2019.0
+572645,Aliya Riaz,Pakistan Women,Right,Right,Pace,right arm medium fast,All-Rounder,32,2014.0
+572638,Diana Baig,Pakistan Women,Right,Right,Pace,right arm fast,Bowler,28,2018.0
+1144870,Gull Feroza,Pakistan Women,Right,,,nan,Wicketkeeper Batter,25,2022.0
+572633,Iram Javed,Pakistan Women,Right,Right,Pace,right arm medium fast,Batter,32,2013.0
+941795,Muneeba Ali,Pakistan Women,Left,,,nan,Wicketkeeper-Batter,27,2016.0
+941803,Nashra Sundhu,Pakistan Women,Left,Left,Spin,slow left arm orthodox,Bowler,26,2017.0
+333355,Nida Dar,Pakistan Women,Right,Right,Spin,right arm off break,All-Rounder,37,2010.0
+941777,Omaima Sohail,Pakistan Women,Right,Right,Spin,right arm offbreak,Batter,27,2018.0
+1315572,Sadaf Shamas,Pakistan Women,Right,Right,Pace,right arm medium,Batter,25,2022.0
+1204917,Sadia Iqbal,Pakistan Women,Left,Left,Spin,slow left arm orthodox,Bowler,29,2019.0
+362356,Sidra Amin,Pakistan Women,Right,Right,Pace,right arm medium fast,Batter,32,2011.0
+1204960,Syeda Aroob Shah,Pakistan Women,Right,,Spin,legbreak googly,All-Rounder,20,2019.0
+1405003,Tasmia Rubab,Pakistan Women,Right,Left,Pace,left arm medium fast,Bowler,21,2024.0
+1204959,Tuba Hassan,Pakistan Women,Right,,Spin,righ arm leg spin,Bowler,23,2022.0
+438265,Maddy Green,New Zealand Women,Right,Right,Spin,right arm offbreak,Batter,31,2012.0
+594654,Brooke Halliday,New Zealand Women,Right,Right,Pace,right arm medium,All-Rounder,36,2021.0
+231740,Sophie Devine,New Zealand Women,Right,Right,Pace,right arm medium fast,Batting All-Rounder,35,2006.0
+54565,Suzie Bates,New Zealand Women,Right,Right,Pace,right arm medium,All-Rounder,37,2006.0
+1169661,Eden Carson,New Zealand Women,Right,Right,Spin,right arm offbreak,Bowler,23,2022.0
+1211545,Isabella Gaze,New Zealand Women,Right,Right,Pace,right arm medium,Wicketkeeper-Batter,20,2022.0
+543550,Hannah Rowe,New Zealand Women,Right,Right,Pace,right arm medium,Bowler,28,2015.0
+1208952,Fran Jonas,New Zealand Women,Right,Left,Spin,left arm orthodox,Bowler,20,2021.0
+306524,Leigh Kasperek,New Zealand Women,Right,Right,Spin,right arm offbreak,Bowler,32,2015.0
+1068933,Jess Kerr,New Zealand Women,Right,Right,Pace,right arm medium,Bowler,26,2020.0
+701751,Rosemary Mair,New Zealand Women,Right,Right,Pace,right arm medium,Bowler,26,2019.0
+1208951,Georgia Plimmer,New Zealand Women,Right,Right,Pace,right arm medium,Batter,20,2022.0
+803971,Amelia Kerr,New Zealand Women,Right,,Spin,legbreak,All-Rounder,23,2016.0
+1239671,Molly Penfold,New Zealand Women,Right,Right,Pace,right arm medium,Bowler,23,2021.0
+380929,Lea Tahuhu,New Zealand Women,Right,,Pace,righ arm medium fast,Bowler,34,2011.0
+924177,Nigar Sultana Joty,Bangladesh Women,Right,,,nan,Wicketkeeper-Batter,27,2014.0
+924183,Nahida Akter,Bangladesh Women,Right,Left,Spin,slow left arm orthodox,Bowler,24,2015.0
+1080264,Murshida Khatun,Bangladesh Women,Left,Right,Pace,right arm medium fast,Batter,25,2018.0
+1352206,Shorna Akter,Bangladesh Women,Right,,Spin,legbreak,All-Rounder,17,2023.0
+1332561,Marufa Akter,Bangladesh Women,Right,Right,Pace,right arm medium fast,Bowler,19,2022.0
+1204964,Rabeya Khan,Bangladesh Women,Right,Right,Spin,right arm leg break,All-Rounder,23,2019.0
+478808,Mst. Ritu Moni,Bangladesh Women,Right,Right,Pace,right arm medium fast,All-Rounder,31,2012.0
+1145089,Sobhana Mostary,Bangladesh Women,Right,Right,Pace,right arm medium fast,Batter,22,2018.0
+1346729,Dilara Akter,Bangladesh Women,Right,Right,Pace,right arm medium,Wicketkeeper,20,2022.0
+1371855,Sultana Khatun,Bangladesh Women,Right,Right,Spin,right arm off break,Bowler,28,2023.0
+343649,Jahanara Alam,Bangladesh Women,Right,Right,Pace,right arm medium fast,Bowler,31,2011.0
+627048,Fahima Khatun,Bangladesh Women,Right,Right,Spin,right arm leg break,Bowler,32,2013.0
+1440554,Taj Nehar,Bangladesh Women,Right,Right,Spin,right arm off break,Batter,27,2022.0
+1257690,Disha Biswas,Bangladesh Women,Right,Right,Pace,right arm medium fast,All-Rounder,20,2022.0
+1380052,Shathi Rani,Bangladesh Women,Right,Right,Pace,right arm medium fast,Batter,26,2023.0
+914675,Kathryn Bryce,Scotland Women,Right,Right,Pace,right arm medium fast,All-Rounder,27,2018.0
+1146661,Katherine Fraser,Scotland Women,Right,Right,Spin,right arm offbreak,All-Rounder,19,2019.0
+1332610,Olivia Bell,Scotland Women,Right,Right,Spin,right arm offbreak,All-Rounder,21,2022.0
+1142972,Saskia Horley,Scotland Women,Right,Right,Spin,right arm offbreak,All-Rounder,24,2022.0
+914677,Sarah Bryce,Scotland Women,Right,,,nan,Wicketkeeper-Batter,24,2018.0
+1184173,Ailsa Lister,Scotland Women,Right,,,nan,Wicketkeeper-Batter,20,2021.0
+416024,Lorna Jack-Brown,Scotland Women,Right,,,nan,Wicketkeeper,31,2018.0
+306201,Abbi Aitken-Drummond,Scotland Women,Right,Right,Pace,right arm medium,Batter,33,2018.0
+1236784,Chloe Abel,Scotland Women,Right,Right,Pace,right arm medium,Batter/Bowler,20,2023.0
+526987,Priyanaz Chatterji,Scotland Women,Right,Right,Pace,right arm medium,All-Rounder,31,2018.0
+1146027,Megan McColl,Scotland Women,Right,Right,Pace,right arm medium,Batter,24,2019.0
+1352119,Darcey Carter,Scotland Women,Right,Right,Spin,right arm offbreak,All-Rounder,19,2023.0
+1095834,Hannah Rainey,Scotland Women,Right,Right,Pace,right arm medium,Batter,27,2018.0
+934494,Abtaha Maqsood,Scotland Women,Right,,Spin,legbreak,Bowler,25,2018.0
+1184969,Rachel Slater,Scotland Women,Right,Left,Pace,left arm medium fast,Bowler,23,2022.0
+922481,Laura Wolvaardt,South Africa Women,Right,Right,Pace,right arm medium,Batter,25,2016.0
+600731,Tazmin Brits,South Africa Women,Right,Right,Pace,right arm medium,Wicketkeeper Batter,33,2018.0
+351836,Marizanne Kapp,South Africa Women,Right,Right,Pace,right arm medium fast,All-Rounder,34,2009.0
+487007,Sune Luus,South Africa Women,Right,,Spin,legbreak,Batter/All-Rounder,28,2012.0
+453370,Chloe Tryon,South Africa Women,Right,Left,Spin,slow left arm orthodox,All-Rounder,30,2010.0
+387261,Ayabonga Khaka,South Africa Women,Right,Right,Pace,right arm medium,Bowler,32,2012.0
+939249,Nadine de Klerk,South Africa Women,Right,Right,Pace,right arm medium,All-Rounder,24,2017.0
+971203,Nonkululeko Mlaba,South Africa Women,Right,Left,Spin,slow left arm orthodox,Bowler,24,2019.0
+1163087,Annerie Dercksen,South Africa Women,Right,,Pace,righ arm medium,All-Rounder,23,2023.0
+499268,Mieke de Ridder,South Africa Women,Right,,,nan,Wicketkeeper Batter,28,2023.0
+1208961,Ayanda Hlubi,South Africa Women,Right,Right,Pace,right arm medium,Bowler,20,2023.0
+499254,Sinalo Jafta,South Africa Women,Right,,,nan,WicketKeeper,29,2016.0
+939229,Tumi Sekhukhune,South Africa Women,Left,Right,Pace,right arm medium fast,Bowler,25,2018.0
+482506,Anneke Bosch,South Africa Women,Right,Right,Pace,"right arm medium, right arm offbreak",Batting All-Rounder,31,2016.0
+1331329,Seshnie Naidu,South Africa Women,Right,,Spin,legbreak,All-Rounder,18,2024.0
+474308,Hayley Matthews,West Indies Women,Right,Right,Spin,right arm offbreak,All-Rounder,26,2014.0
+424631,Shemaine Campbelle,West Indies Women,Right,Right,Pace,right arm medium fast,Wicketkeeper-Batter,31,2009.0
+355349,Deandra Dottin,West Indies Women,Right,Right,Pace,right arm medium fast,All-Rounder,33,2008.0
+355359,Stafanie Taylor,West Indies Women,Right,Right,Spin,right arm offbreak,Batter/All-Rounder,33,2008.0
+661441,Aaliyah Alleyne,West Indies Women,Right,Right,Pace,right arm medium,Bowler,28,2019.0
+474191,Shamilia Connell,West Indies Women,Right,Right,Pace,right arm fast,Bowler,32,2014.0
+474190,Chinelle Henry,West Indies Women,Right,Right,Pace,right arm medium fast,Batter,29,2013.0
+1268281,Zaida James,West Indies Women,Left,Left,Spin,slow left arm orthodox,All-Rounder,19,2023.0
+769485,Qiana Joseph,West Indies Women,Left,Left,Spin,slow left arm orthodox,Bowler,23,2017.0
+907733,Mandy Mangru,West Indies Women,Right,Right,Spin,right arm offbreak,Batting All-Rounder,22,2022.0
+1352168,Ashmini Munisar,West Indies Women,Right,Right,Spin,right arm offbreak,All-Rounder,20,2023.0
+355355,Chedean Nation,West Indies Women,Right,,,nan,Batter,31,2008.0
+769517,Karishma Ramharack,West Indies Women,Left,Right,Spin,right arm offbreak,Bowler,29,2019.0
+578114,Nerissa Crafton,West Indies Women,Left,Left,Pace,left arm medium,All-Rounder,26,
+355351,Afy Fletcher,West Indies Women,Right,,Spin,legbreak,Bowler,37,2008.0

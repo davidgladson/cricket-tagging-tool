@@ -4,7 +4,8 @@ import pandas as pd
 import os
 
 from constants import VENUE_LIST, TOSS_CHOICE_LIST, DB_URI
-from utils import get_over_string, get_current_run_rate, match_list_formatter, move_to_next_ball, get_lineup_display_data
+from utils import get_over_string, get_current_run_rate, match_list_formatter, move_to_next_ball, get_lineup_display_data, \
+    prepare_download_bbb_data
 from db_utils import MongoDBConnector
 
 
@@ -140,7 +141,7 @@ with tab_1:
             
     with sub_col_3:
         if st.session_state.ball_by_ball_data is not None and len(st.session_state.ball_by_ball_data) > 0:
-            bbb_data_download = pd.DataFrame(st.session_state.ball_by_ball_data)
+            bbb_data_download = prepare_download_bbb_data(connector, st.session_state.match_id)
             download_disabled = False
         else:
             bbb_data_download = pd.DataFrame()
@@ -149,7 +150,7 @@ with tab_1:
         st.download_button(
             label="Download Data",
             data=bbb_data_download.to_csv(index=False).encode("utf-8"),
-            file_name="ball_by_ball_data.csv",
+            file_name="{}_ball_by_ball_data.csv".format(st.session_state.match_id),
             mime="text/csv", 
             disabled=download_disabled)
 
