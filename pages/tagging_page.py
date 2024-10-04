@@ -4,7 +4,7 @@ import os
 
 from constants import EXTRAS_LIST, WICKET_TYPE_LIST, SHOT_TYPE_OPTIONS, DB_URI, BALL_LINE_OPTIONS, BALL_LENGTH_OPTIONS
 
-from utils import get_over_string, get_current_run_rate
+from utils import get_over_string, get_current_run_rate, get_next_ball_players
 
 from db_utils import MongoDBConnector
 
@@ -120,13 +120,25 @@ def reset_inputs():
     st.session_state.wicket_type = None
     st.session_state.out_batter_in = None
     st.session_state.fielder_name = None
+    
 
+@st.dialog("Inputs Missing!")
+def inputs_missing():
+    st.write("Striker, Non Striker and Bowler Details Are Mandatory!")
+    
 
 def save_and_next_ball(conn, over_num, ball_num,
                        batting_team_name, batter_name, batter_id, non_striker_name, non_striker_id, 
                        bowling_team_name, bowler_name, bowler_id, ball_speed, line, length,
                        batter_runs, shot_type, is_extras, extras_type, extras_runs, 
                        is_wicket, wicket_type, out_batter, fielder_name):
+    
+    if any([x is None for x in [over_num, ball_num, 
+                                batting_team_name, batter_name, batter_id, non_striker_name, non_striker_id, 
+                                bowling_team_name, bowler_name, bowler_id, 
+                                batter_runs, extras_runs]]):
+        inputs_missing()
+        return 
     
     # Increment Current Scores
     total_ball_runs = batter_runs + extras_runs
@@ -180,6 +192,8 @@ def save_and_next_ball(conn, over_num, ball_num,
             st.session_state.over_ball_ctr = move_to_next_ball(over_num, ball_num, st.session_state.over_ball_ctr)
     else:
         st.session_state.over_ball_ctr += 1
+        
+    st.session_state.striker_in, st.session_state.non_striker_in, st.session_state.bowler_in = get_next_ball_players(bbb_data_list[0])
     
     reset_inputs()
 
@@ -261,12 +275,12 @@ with col_1:
     ball_num_input = st.number_input("Ball Number:", value=st.session_state.ball_num, disabled=True)
     
 with col_2:
-    batter_name_input = st.selectbox("Batter:", batter_list, index=None)
+    batter_name_input = st.selectbox("Batter:", batter_list, index=None, key="striker_in")
     
     if batter_name_input is not None:
         batter_id_input = players_data_fetched[players_data_fetched["player_name"] == batter_name_input]["player_id"].iloc[0]
         non_striker_list = set(batter_list).difference(set([batter_name_input]))
-        non_striker_name_input = st.selectbox("Non Striker:", non_striker_list)
+        non_striker_name_input = st.selectbox("Non Striker:", non_striker_list, key="non_striker_in")
         
         if non_striker_name_input is not None:
             non_striker_id_input = players_data_fetched[players_data_fetched["player_name"] == non_striker_name_input]["player_id"].iloc[0]
@@ -274,11 +288,11 @@ with col_2:
             non_striker_id_input = None
     else:
         batter_id_input = None
-        non_striker_name_input = st.selectbox("Non Striker:", batter_list, disabled=True)   
+        non_striker_name_input = st.selectbox("Non Striker:", batter_list, disabled=True, key="non_striker_in")   
         non_striker_id_input = None 
     
 with col_3:
-    bowler_name_input = st.selectbox("Bowler:", bowler_list, index=None)
+    bowler_name_input = st.selectbox("Bowler:", bowler_list, index=None, key="bowler_in")
     if bowler_name_input is not None:
         bowler_id_input = players_data_fetched[players_data_fetched["player_name"] == bowler_name_input]["player_id"].iloc[0]
         is_ball_speed_input = st.checkbox("Log Ball Speed?", value=False, key="is_ball_speed")
