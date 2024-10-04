@@ -29,6 +29,18 @@ if not check_password():
 #============================================Password Check Function===================
 
 
+@st.dialog("Match Created Successfully!")
+def match_details_success(match_id_in):
+    st.write("Match {} created successfully!".format(match_id_in))
+    
+def reset_inputs():
+    st.session_state.match_venue = None
+    st.session_state.team_1_in = None
+    st.session_state.team_2_in = None
+    st.session_state.toss_winner = None
+    st.session_state.toss_choice = None
+
+
 if "match_id" not in st.session_state:
     st.session_state.match_id = None
     
@@ -56,6 +68,9 @@ def store_match_details(conn, venue, date, time, team_1_name, team_1_df, team_2_
     player_data_df["match_id"] = unique_match_id
     player_data_df.drop(columns=["_id"], inplace=True)
     conn.add_new_lineups(player_data_df.to_dict('records'))
+    
+    match_details_success(unique_match_id)
+    reset_inputs()
 
 @st.cache_resource
 def connect_db(db_uri):
@@ -172,15 +187,17 @@ with tab_2:
     col_1, col_2 = st.columns(2)
 
     with col_1:
-        venue_in = st.selectbox("Match Venue:", VENUE_LIST, index=None)
+        venue_in = st.selectbox("Match Venue:", VENUE_LIST, index=None, key="match_venue")
             
         st.divider()
         
-        team_name_1_in = st.selectbox("Team 1:", TEAM_LIST, index=None)
+        team_name_1_in = st.selectbox("Team 1:", TEAM_LIST, index=None, key="team_1_in")
         if team_name_1_in is not None:
             team_1_squad, col_config = get_lineup_display_data(squads, team_name_1_in)
             team_list_1_in = st.data_editor(team_1_squad, 
                                             num_rows="fixed", hide_index=True, column_config=col_config, height=563)
+        else:
+            team_list_1_in = pd.DataFrame()
 
     with col_2:
         sub_col_1, sub_col_2 = st.columns(2)
@@ -200,24 +217,24 @@ with tab_2:
             other_team_list = TEAM_LIST
             other_team_picker_disabled = True
         
-        team_name_2_in = st.selectbox("Team 2:", other_team_list, index=None, disabled=other_team_picker_disabled)
+        team_name_2_in = st.selectbox("Team 2:", other_team_list, index=None, disabled=other_team_picker_disabled, key="team_2_in")
         if team_name_2_in is not None:
             team_2_squad, col_config = get_lineup_display_data(squads, team_name_2_in)
             team_list_2_in = st.data_editor(team_2_squad, 
                                             num_rows="fixed", hide_index=True, column_config=col_config, height=563)
+        else:
+            team_list_2_in = pd.DataFrame()
         
     with col_1:    
         toss_team_list = list(filter(lambda x: x is not None, [team_name_1_in, team_name_2_in]))
-        toss_winner_in = st.selectbox("Toss Won By:", toss_team_list, index=None)
+        toss_winner_in = st.selectbox("Toss Won By:", toss_team_list, index=None, key="toss_winner")
         
     with col_2:    
-        toss_choice_in = st.selectbox("Toss Choice:", TOSS_CHOICE_LIST, index=None)
+        toss_choice_in = st.selectbox("Toss Choice:", TOSS_CHOICE_LIST, index=None, key="toss_choice")
         
     _, _, col_3, _, _ = st.columns(5)
         
     with col_3:
-        if st.button("Save Match Details"):
-            store_match_details(connector, venue_in, date_in, time_in, 
-                                team_name_1_in, team_list_1_in, team_name_2_in, team_list_2_in, 
-                                toss_winner_in, toss_choice_in)
-            st.switch_page("pages/tagging_home_page.py")
+        st.button("Save Match Details", on_click=store_match_details, args=(connector, venue_in, date_in, time_in, 
+                                                                            team_name_1_in, team_list_1_in, team_name_2_in, 
+                                                                            team_list_2_in, toss_winner_in, toss_choice_in))
