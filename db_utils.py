@@ -71,13 +71,22 @@ class MongoDBConnector(object):
         self.squads_collection.delete_many({})
         self.squads_collection.insert_many(squads_data_list)
         
+    def clear_single_match(self, match_id):
+        filter_in = {"match_id": match_id}
+        
+        self.bbb_data_collection.delete_many(filter_in)
+        self.lineups_collection.delete_many(filter_in)
+        self.match_list_collection.delete_many(filter_in)
+        
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--reset_db", action="store_true", help="Squad Updates to Push To DB or not")
+    parser.add_argument("--clear_match", help="Provide a Match ID to delete all data")
     
     args = parser.parse_args()
     reset_db = args.reset_db
+    match_id = args.clear_match
     
     from constants import DB_URI
     
@@ -88,9 +97,14 @@ if __name__ == "__main__":
     print(connector.get_matches())
     print(connector.get_single_match_details("INDIA-WOMEN_PAKISTAN-WOMEN_20240924"))
     
+    # ***RISK*** ONLY ENABLE IF DB IS TO BE CLEARED
     ENABLE_DELETE = False 
     
     if ENABLE_DELETE and reset_db:
         print("Deleting Tables...")
         connector.fully_reset_db()
+        
+    if ENABLE_DELETE and (match_id is not None):
+        print("Deleting Match ID: {}".format(match_id))
+        connector.clear_single_match(match_id)
 

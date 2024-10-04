@@ -49,7 +49,6 @@ def get_over_string(over_num, ball_num):
 
 
 def get_current_run_rate(runs, over_num, ball_num):
-    print(runs, over_num, ball_num)
     num_balls = (over_num - 1) * 6 + ball_num
     if num_balls > 0:
         return runs / num_balls * 6
@@ -103,3 +102,58 @@ def prepare_download_bbb_data(conn, match_id):
     bbb_downloadable = bbb_with_bowler_info[BBB_DOWNLOADABLE_COLUMNS]
     
     return bbb_downloadable
+
+
+def get_next_ball_players(last_ball_row):    
+    next_ball_striker = None
+    next_ball_non_striker = None
+    next_ball_bowler = None
+    
+    is_wicket = last_ball_row["is_wicket"]
+    is_extra = last_ball_row["is_extras"]
+    last_ball_num = int(last_ball_row["ball_num"])
+    last_ball_striker = last_ball_row["batter_name"]
+    last_ball_non_striker = last_ball_row["non_striker_name"]
+    last_ball_bowler = last_ball_row["bowler_name"]
+    batter_runs = int(last_ball_row["batter_runs"]) + int(last_ball_row["byes_runs"]) + int(last_ball_row["leg_byes_runs"])
+    out_batter = last_ball_row["out_batter"]
+    
+    print("Pre Processing", last_ball_striker, last_ball_non_striker, last_ball_bowler, batter_runs, last_ball_num)
+    
+    if is_wicket:
+        last_ball_striker = None if last_ball_striker == out_batter else last_ball_striker
+        last_ball_non_striker = None if last_ball_non_striker == out_batter else last_ball_non_striker
+    
+    if is_extra:
+        # If the ball is an extra, bowler remains the same
+        next_ball_bowler = last_ball_bowler        
+        
+        if batter_runs % 2 == 0:
+            next_ball_striker = last_ball_striker
+            next_ball_non_striker = last_ball_non_striker
+        else:
+            next_ball_striker = last_ball_non_striker
+            next_ball_non_striker = last_ball_striker        
+    else:   
+        # IF not an extra, bowler changes if previous ball == last ball of the over
+        if last_ball_num == 6:
+            next_ball_bowler = None
+            if batter_runs % 2 == 0:
+                next_ball_striker = last_ball_non_striker
+                next_ball_non_striker = last_ball_striker
+            else:
+                next_ball_striker = last_ball_striker
+                next_ball_non_striker = last_ball_non_striker
+        else:
+            next_ball_bowler = last_ball_bowler
+            
+            if batter_runs % 2 == 0:
+                next_ball_striker = last_ball_striker
+                next_ball_non_striker = last_ball_non_striker
+            else:
+                next_ball_striker = last_ball_non_striker
+                next_ball_non_striker = last_ball_striker  
+    
+    print("Post Processing", next_ball_striker, next_ball_non_striker, next_ball_bowler)
+    
+    return next_ball_striker, next_ball_non_striker, next_ball_bowler

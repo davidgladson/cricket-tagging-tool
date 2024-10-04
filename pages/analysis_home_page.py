@@ -2490,5 +2490,5 @@ elif sidebar_option == "Strength vs Weakness":
             st.pyplot(plt)
 
 else :
-    st.header("Team Builder")
-
+    st.header("Team Builder")   
+    st.pyplot(plt)

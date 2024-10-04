@@ -4,7 +4,7 @@ import os
 
 from constants import EXTRAS_LIST, WICKET_TYPE_LIST, SHOT_TYPE_OPTIONS, DB_URI, BALL_LINE_OPTIONS, BALL_LENGTH_OPTIONS
 
-from utils import get_over_string, get_current_run_rate
+from utils import get_over_string, get_current_run_rate, get_next_ball_players
 
 from db_utils import MongoDBConnector
 
@@ -52,7 +52,6 @@ if "over_ball_ctr" not in st.session_state:
     st.session_state.over_ball_ctr = 1
     
 
-@st.cache_data
 def move_to_next_ball(over_num, ball_num, over_ball_ctr):
     if ball_num == 6:
         next_ball_num = 1
@@ -107,11 +106,39 @@ def parse_extras_data(extras_type_input, extras_runs_input):
     return wide_runs, no_ball_runs, byes_runs, leg_byes_runs
 
 
+def reset_inputs():
+    st.session_state.is_ball_speed = False
+    st.session_state.ball_speed_in = None
+    st.session_state.ball_line = None
+    st.session_state.ball_length = None
+    st.session_state.batter_runs = 0
+    st.session_state.shot_type = None
+    st.session_state.is_extras = False
+    st.session_state.extras_type = None
+    st.session_state.extras_runs = 0
+    st.session_state.is_wicket = False
+    st.session_state.wicket_type = None
+    st.session_state.out_batter_in = None
+    st.session_state.fielder_name = None
+    
+
+@st.dialog("Inputs Missing!")
+def inputs_missing():
+    st.write("Striker, Non Striker and Bowler Details Are Mandatory!")
+    
+
 def save_and_next_ball(conn, over_num, ball_num,
                        batting_team_name, batter_name, batter_id, non_striker_name, non_striker_id, 
                        bowling_team_name, bowler_name, bowler_id, ball_speed, line, length,
                        batter_runs, shot_type, is_extras, extras_type, extras_runs, 
                        is_wicket, wicket_type, out_batter, fielder_name):
+    
+    if any([x is None for x in [over_num, ball_num, 
+                                batting_team_name, batter_name, batter_id, non_striker_name, non_striker_id, 
+                                bowling_team_name, bowler_name, bowler_id, 
+                                batter_runs, extras_runs]]):
+        inputs_missing()
+        return 
     
     # Increment Current Scores
     total_ball_runs = batter_runs + extras_runs
@@ -165,7 +192,10 @@ def save_and_next_ball(conn, over_num, ball_num,
             st.session_state.over_ball_ctr = move_to_next_ball(over_num, ball_num, st.session_state.over_ball_ctr)
     else:
         st.session_state.over_ball_ctr += 1
+        
+    st.session_state.striker_in, st.session_state.non_striker_in, st.session_state.bowler_in = get_next_ball_players(bbb_data_list[0])
     
+    reset_inputs()
 
 
 @st.cache_resource
@@ -245,12 +275,12 @@ with col_1:
     ball_num_input = st.number_input("Ball Number:", value=st.session_state.ball_num, disabled=True)
     
 with col_2:
-    batter_name_input = st.selectbox("Batter:", batter_list, index=None)
+    batter_name_input = st.selectbox("Batter:", batter_list, index=None, key="striker_in")
     
     if batter_name_input is not None:
         batter_id_input = players_data_fetched[players_data_fetched["player_name"] == batter_name_input]["player_id"].iloc[0]
         non_striker_list = set(batter_list).difference(set([batter_name_input]))
-        non_striker_name_input = st.selectbox("Non Striker:", non_striker_list)
+        non_striker_name_input = st.selectbox("Non Striker:", non_striker_list, key="non_striker_in")
         
         if non_striker_name_input is not None:
             non_striker_id_input = players_data_fetched[players_data_fetched["player_name"] == non_striker_name_input]["player_id"].iloc[0]
@@ -258,16 +288,16 @@ with col_2:
             non_striker_id_input = None
     else:
         batter_id_input = None
-        non_striker_name_input = st.selectbox("Non Striker:", batter_list, disabled=True)   
+        non_striker_name_input = st.selectbox("Non Striker:", batter_list, disabled=True, key="non_striker_in")   
         non_striker_id_input = None 
     
 with col_3:
-    bowler_name_input = st.selectbox("Bowler:", bowler_list, index=None)
+    bowler_name_input = st.selectbox("Bowler:", bowler_list, index=None, key="bowler_in")
     if bowler_name_input is not None:
         bowler_id_input = players_data_fetched[players_data_fetched["player_name"] == bowler_name_input]["player_id"].iloc[0]
-        is_ball_speed_input = st.checkbox("Log Ball Speed?", value=False)
+        is_ball_speed_input = st.checkbox("Log Ball Speed?", value=False, key="is_ball_speed")
         if is_ball_speed_input:
-            ball_speed_input = st.number_input("Ball Speed: ", value=None, min_value=0.0)
+            ball_speed_input = st.number_input("Ball Speed: ", value=None, min_value=0.0, key="ball_speed_in")
         else:
             ball_speed_input = None
     else:
@@ -275,25 +305,25 @@ with col_3:
         ball_speed_input = None
 
 with col_4:
-    line_input = st.selectbox("Ball Line:", BALL_LINE_OPTIONS, index=None)
-    length_input = st.selectbox("Ball Length:", BALL_LENGTH_OPTIONS, index=None)
+    line_input = st.selectbox("Ball Line:", BALL_LINE_OPTIONS, index=None, key="ball_line")
+    length_input = st.selectbox("Ball Length:", BALL_LENGTH_OPTIONS, index=None, key="ball_length")
 
 with col_5:
-    batter_runs_input = st.number_input("Batter Runs", value=0, min_value=0)
+    batter_runs_input = st.number_input("Batter Runs", value=0, min_value=0, key="batter_runs")
     
-    shot_type_input = st.selectbox("Shot Type:", SHOT_TYPE_OPTIONS, index=None)
+    shot_type_input = st.selectbox("Shot Type:", SHOT_TYPE_OPTIONS, index=None, key="shot_type")
 
 with col_6:
-    is_extras_input = st.checkbox("Extras?", value=False)
+    is_extras_input = st.checkbox("Extras?", value=False, key="is_extras")
     if is_extras_input:
-        extras_type_input = st.selectbox("Extra Type:", EXTRAS_LIST, index=None)
-        extras_runs_input = st.number_input("Extra Runs", value=0, min_value=0)
+        extras_type_input = st.selectbox("Extra Type:", EXTRAS_LIST, index=None, key="extras_type")
+        extras_runs_input = st.number_input("Extra Runs", value=0, min_value=0, key="extras_runs")
     else:
         extras_type_input = None
         extras_runs_input = 0
     
 with col_7:
-    is_wicket_input = st.checkbox("Wicket?", value=False)
+    is_wicket_input = st.checkbox("Wicket?", value=False, key="is_wicket")
     if is_wicket_input:
         
         out_batter_options = []
@@ -302,9 +332,9 @@ with col_7:
         if non_striker_name_input is not None:
             out_batter_options.append(non_striker_name_input)
             
-        wicket_type_input = st.selectbox("Wicket Type:", WICKET_TYPE_LIST, index=None)
-        out_batter_input = st.selectbox("Dismissed Batter:", out_batter_options, index=None)
-        fielder_name_input = st.selectbox("Fielder Name:", bowler_list, index=None)
+        wicket_type_input = st.selectbox("Wicket Type:", WICKET_TYPE_LIST, index=None, key="wicket_type")
+        out_batter_input = st.selectbox("Dismissed Batter:", out_batter_options, index=None, key="out_batter_in")
+        fielder_name_input = st.selectbox("Fielder Name:", bowler_list, index=None, key="fielder_name")
     else:
         wicket_type_input = None
         out_batter_input = None
@@ -330,10 +360,11 @@ with col_5:
         st.switch_page("pages/tagging_home_page.py")
 
 with col_6: 
-    if st.button("Save and Next"):
-        save_and_next_ball(connector, over_num_input, ball_num_input, 
-                           batting_team, batter_name_input, batter_id_input, non_striker_name_input, non_striker_id_input, 
-                           bowling_team, bowler_name_input, bowler_id_input, ball_speed_input, line_input, length_input,
-                           batter_runs_input, shot_type_input, is_extras_input, extras_type_input, extras_runs_input, 
-                           is_wicket_input, wicket_type_input, out_batter_input, fielder_name_input)
-        st.rerun()
+    st.button("Save and Next", on_click=save_and_next_ball, 
+              args=(connector, over_num_input, ball_num_input,
+                    batting_team, batter_name_input, batter_id_input, non_striker_name_input, non_striker_id_input, 
+                    bowling_team, bowler_name_input, bowler_id_input, 
+                    ball_speed_input, line_input, length_input,
+                    batter_runs_input, shot_type_input, 
+                    is_extras_input, extras_type_input, extras_runs_input, 
+                    is_wicket_input, wicket_type_input, out_batter_input, fielder_name_input))
