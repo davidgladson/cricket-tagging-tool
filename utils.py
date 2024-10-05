@@ -99,7 +99,10 @@ def prepare_download_bbb_data(conn, match_id):
                                                  left_on=["bowler_id", "bowler_name"], 
                                                  right_on=["player_id", "player_name"])
     
-    bbb_downloadable = bbb_with_bowler_info[BBB_DOWNLOADABLE_COLUMNS]
+    try:
+        bbb_downloadable = bbb_with_bowler_info[BBB_DOWNLOADABLE_COLUMNS]
+    except Exception as e:
+        bbb_downloadable = bbb_with_bowler_info.copy()
     
     return bbb_downloadable
 
