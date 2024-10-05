@@ -113,6 +113,7 @@ def reset_inputs():
     st.session_state.ball_length = None
     st.session_state.batter_runs = 0
     st.session_state.shot_type = None
+    st.session_state.batter_control_in = False
     st.session_state.is_extras = False
     st.session_state.extras_type = None
     st.session_state.extras_runs = 0
@@ -129,9 +130,11 @@ def inputs_missing():
 
 def save_and_next_ball(conn, over_num, ball_num,
                        batting_team_name, batter_name, batter_id, non_striker_name, non_striker_id, 
-                       bowling_team_name, bowler_name, bowler_id, ball_speed, line, length,
-                       batter_runs, shot_type, is_extras, extras_type, extras_runs, 
-                       is_wicket, wicket_type, out_batter, fielder_name):
+                       bowling_team_name, bowler_name, bowler_id, 
+                       ball_speed, line, length,
+                       batter_runs, shot_type, batter_control,
+                       is_extras, extras_type, extras_runs, 
+                       is_wicket, wicket_type, out_batter, fielder_name, is_sub_fielder):
     
     if any([x is None for x in [over_num, ball_num, 
                                 batting_team_name, batter_name, batter_id, non_striker_name, non_striker_id, 
@@ -170,6 +173,7 @@ def save_and_next_ball(conn, over_num, ball_num,
         "runs_scored": total_ball_runs,
         "batter_runs": batter_runs, 
         "shot_type": shot_type,
+        "batter_control": None if batter_control is None else (1 if batter_control else 0),
         "is_extras": is_extras, 
         "extras_type": extras_type, 
         "extras_runs": extras_runs,
@@ -181,6 +185,7 @@ def save_and_next_ball(conn, over_num, ball_num,
         "wicket_type": wicket_type, 
         "out_batter": out_batter, 
         "fielder_name": fielder_name, 
+        "is_sub_fielder": is_sub_fielder,
         "current_runs": st.session_state.runs, 
         "current_wickets": st.session_state.wickets  
     }]
@@ -295,11 +300,7 @@ with col_3:
     bowler_name_input = st.selectbox("Bowler:", bowler_list, index=None, key="bowler_in")
     if bowler_name_input is not None:
         bowler_id_input = players_data_fetched[players_data_fetched["player_name"] == bowler_name_input]["player_id"].iloc[0]
-        is_ball_speed_input = st.checkbox("Log Ball Speed?", value=False, key="is_ball_speed")
-        if is_ball_speed_input:
-            ball_speed_input = st.number_input("Ball Speed: ", value=None, min_value=0.0, key="ball_speed_in")
-        else:
-            ball_speed_input = None
+        ball_speed_input = st.number_input("Ball Speed: ", value=None, min_value=0.0, key="ball_speed_in")
     else:
         bowler_id_input = None
         ball_speed_input = None
@@ -312,6 +313,8 @@ with col_5:
     batter_runs_input = st.number_input("Batter Runs", value=0, min_value=0, key="batter_runs")
     
     shot_type_input = st.selectbox("Shot Type:", SHOT_TYPE_OPTIONS, index=None, key="shot_type")
+    
+    batter_control_input = st.toggle("Batter In Control of the shot?", key="batter_control_in")
 
 with col_6:
     is_extras_input = st.checkbox("Extras?", value=False, key="is_extras")
@@ -334,11 +337,20 @@ with col_7:
             
         wicket_type_input = st.selectbox("Wicket Type:", WICKET_TYPE_LIST, index=None, key="wicket_type")
         out_batter_input = st.selectbox("Dismissed Batter:", out_batter_options, index=None, key="out_batter_in")
-        fielder_name_input = st.selectbox("Fielder Name:", bowler_list, index=None, key="fielder_name")
+        fielder_name_input = st.selectbox("Fielder Name:", bowler_list + ["SUBSTITUTE"], index=None, key="fielder_name")
+        is_sub_fielder_input = False
+        
+        if fielder_name_input == "SUBSTITUTE":
+            is_sub_fielder_input = True
+            sub_fielder_name = st.text_input("Sub Fielder Name: ", value=None)
+            if sub_fielder_name is not None:
+                fielder_name_input = sub_fielder_name
+                        
     else:
         wicket_type_input = None
         out_batter_input = None
         fielder_name_input = None
+        is_sub_fielder_input = False
         
 st.divider()
 
@@ -365,6 +377,6 @@ with col_6:
                     batting_team, batter_name_input, batter_id_input, non_striker_name_input, non_striker_id_input, 
                     bowling_team, bowler_name_input, bowler_id_input, 
                     ball_speed_input, line_input, length_input,
-                    batter_runs_input, shot_type_input, 
+                    batter_runs_input, shot_type_input, batter_control_input,
                     is_extras_input, extras_type_input, extras_runs_input, 
-                    is_wicket_input, wicket_type_input, out_batter_input, fielder_name_input))
+                    is_wicket_input, wicket_type_input, out_batter_input, fielder_name_input, is_sub_fielder_input))
