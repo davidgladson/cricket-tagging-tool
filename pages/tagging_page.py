@@ -113,6 +113,7 @@ def reset_inputs():
     st.session_state.ball_length = None
     st.session_state.batter_runs = 0
     st.session_state.shot_type = None
+    st.session_state.batter_control_in = False
     st.session_state.is_extras = False
     st.session_state.extras_type = None
     st.session_state.extras_runs = 0
@@ -129,8 +130,10 @@ def inputs_missing():
 
 def save_and_next_ball(conn, over_num, ball_num,
                        batting_team_name, batter_name, batter_id, non_striker_name, non_striker_id, 
-                       bowling_team_name, bowler_name, bowler_id, ball_speed, line, length,
-                       batter_runs, shot_type, is_extras, extras_type, extras_runs, 
+                       bowling_team_name, bowler_name, bowler_id, 
+                       ball_speed, line, length,
+                       batter_runs, shot_type, batter_control,
+                       is_extras, extras_type, extras_runs, 
                        is_wicket, wicket_type, out_batter, fielder_name):
     
     if any([x is None for x in [over_num, ball_num, 
@@ -170,6 +173,7 @@ def save_and_next_ball(conn, over_num, ball_num,
         "runs_scored": total_ball_runs,
         "batter_runs": batter_runs, 
         "shot_type": shot_type,
+        "batter_control": None if batter_control is None else (1 if batter_control else 0),
         "is_extras": is_extras, 
         "extras_type": extras_type, 
         "extras_runs": extras_runs,
@@ -308,6 +312,8 @@ with col_5:
     batter_runs_input = st.number_input("Batter Runs", value=0, min_value=0, key="batter_runs")
     
     shot_type_input = st.selectbox("Shot Type:", SHOT_TYPE_OPTIONS, index=None, key="shot_type")
+    
+    batter_control_input = st.toggle("Batter In Control of the shot?", key="batter_control_in")
 
 with col_6:
     is_extras_input = st.checkbox("Extras?", value=False, key="is_extras")
@@ -361,6 +367,6 @@ with col_6:
                     batting_team, batter_name_input, batter_id_input, non_striker_name_input, non_striker_id_input, 
                     bowling_team, bowler_name_input, bowler_id_input, 
                     ball_speed_input, line_input, length_input,
-                    batter_runs_input, shot_type_input, 
+                    batter_runs_input, shot_type_input, batter_control_input,
                     is_extras_input, extras_type_input, extras_runs_input, 
                     is_wicket_input, wicket_type_input, out_batter_input, fielder_name_input))
