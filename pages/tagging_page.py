@@ -134,7 +134,7 @@ def save_and_next_ball(conn, over_num, ball_num,
                        ball_speed, line, length,
                        batter_runs, shot_type, batter_control,
                        is_extras, extras_type, extras_runs, 
-                       is_wicket, wicket_type, out_batter, fielder_name):
+                       is_wicket, wicket_type, out_batter, fielder_name, is_sub_fielder):
     
     if any([x is None for x in [over_num, ball_num, 
                                 batting_team_name, batter_name, batter_id, non_striker_name, non_striker_id, 
@@ -185,6 +185,7 @@ def save_and_next_ball(conn, over_num, ball_num,
         "wicket_type": wicket_type, 
         "out_batter": out_batter, 
         "fielder_name": fielder_name, 
+        "is_sub_fielder": is_sub_fielder,
         "current_runs": st.session_state.runs, 
         "current_wickets": st.session_state.wickets  
     }]
@@ -336,11 +337,20 @@ with col_7:
             
         wicket_type_input = st.selectbox("Wicket Type:", WICKET_TYPE_LIST, index=None, key="wicket_type")
         out_batter_input = st.selectbox("Dismissed Batter:", out_batter_options, index=None, key="out_batter_in")
-        fielder_name_input = st.selectbox("Fielder Name:", bowler_list, index=None, key="fielder_name")
+        fielder_name_input = st.selectbox("Fielder Name:", bowler_list + ["SUBSTITUTE"], index=None, key="fielder_name")
+        is_sub_fielder_input = False
+        
+        if fielder_name_input == "SUBSTITUTE":
+            is_sub_fielder_input = True
+            sub_fielder_name = st.text_input("Sub Fielder Name: ", value=None)
+            if sub_fielder_name is not None:
+                fielder_name_input = sub_fielder_name
+                        
     else:
         wicket_type_input = None
         out_batter_input = None
         fielder_name_input = None
+        is_sub_fielder_input = False
         
 st.divider()
 
@@ -369,4 +379,4 @@ with col_6:
                     ball_speed_input, line_input, length_input,
                     batter_runs_input, shot_type_input, batter_control_input,
                     is_extras_input, extras_type_input, extras_runs_input, 
-                    is_wicket_input, wicket_type_input, out_batter_input, fielder_name_input))
+                    is_wicket_input, wicket_type_input, out_batter_input, fielder_name_input, is_sub_fielder_input))

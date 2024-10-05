@@ -32,7 +32,7 @@ BBB_DOWNLOADABLE_COLUMNS = ["match_id", "innings_num", "over_num", "ball_num", "
                             "runs_scored", "batter_runs", "shot_type", "batter_control",
                             "is_extras", "extras_type", "extras_runs", 
                             "wide_runs", "no_ball_runs", "byes_runs", "leg_byes_runs", 
-                            "is_wicket", "wicket_type", "out_batter", "fielder_name", 
+                            "is_wicket", "wicket_type", "out_batter", "fielder_name", "is_sub_fielder",
                             "current_runs", "current_wickets"]
 
 # DB Details
