@@ -295,11 +295,7 @@ with col_3:
     bowler_name_input = st.selectbox("Bowler:", bowler_list, index=None, key="bowler_in")
     if bowler_name_input is not None:
         bowler_id_input = players_data_fetched[players_data_fetched["player_name"] == bowler_name_input]["player_id"].iloc[0]
-        is_ball_speed_input = st.checkbox("Log Ball Speed?", value=False, key="is_ball_speed")
-        if is_ball_speed_input:
-            ball_speed_input = st.number_input("Ball Speed: ", value=None, min_value=0.0, key="ball_speed_in")
-        else:
-            ball_speed_input = None
+        ball_speed_input = st.number_input("Ball Speed: ", value=None, min_value=0.0, key="ball_speed_in")
     else:
         bowler_id_input = None
         ball_speed_input = None
