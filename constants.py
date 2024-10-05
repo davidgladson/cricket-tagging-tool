@@ -6,7 +6,8 @@ VENUE_LIST = ["Sharjah Cricket Stadium", "Dubai International Cricket Stadium"]
 TOSS_CHOICE_LIST = ["Batting", "Fielding"]
 
 EXTRAS_LIST = ["No Ball", "Wide", "Byes", "Leg Byes"]
-WICKET_TYPE_LIST = ["Bowled", "LBW", "Caught", "Stumped", "Run Out", "Hit Wicket", "Timed Out", "Obstructing the Field"]
+WICKET_TYPE_LIST = ["Bowled", "LBW", "Caught", "Stumped", "Run Out", "Hit Wicket", "Timed Out", "Obstructing the Field", 
+                    "Hit Ball Twice", "Handling The Ball"]
 
 SHOT_TYPE_OPTIONS = ["DEFENDED", "CUT_SHOT", "FLICK", "ON_DRIVE", "PULL", "LEG_GLANCE", "STEERED", "PUSH", "SQUARE_DRIVE", 
                      "LEFT_ALONE", "COVER_DRIVE", "STRAIGHT_DRIVE", "SLOG_SHOT", "DAB", "UPPER_CUT", "SWEEP_SHOT", "HOOK", 
@@ -17,6 +18,12 @@ SHOT_TYPE_OPTIONS = ["DEFENDED", "CUT_SHOT", "FLICK", "ON_DRIVE", "PULL", "LEG_G
 
 BALL_LINE_OPTIONS = ["On Stumps", "Outside Off Stump", "Outside Leg Stump", "Wide Outside Off Stump", "Wide Outside Leg Stump"]
 BALL_LENGTH_OPTIONS = ["Short", "Short of Good Length", "Good Length", "Full", "Yorker", "Full Toss"]
+
+# Sort All Dropdown options
+EXTRAS_LIST.sort()
+SHOT_TYPE_OPTIONS.sort()
+BALL_LINE_OPTIONS.sort()
+BALL_LENGTH_OPTIONS.sort()
 
 BBB_DOWNLOADABLE_COLUMNS = ["match_id", "innings_num", "over_num", "ball_num", "ball_id",
                             "batting_team", "batter_id", "batter_name", "batting_hand", "non_striker_id", "non_striker_name", 

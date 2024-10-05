@@ -85,7 +85,10 @@ tab_1, tab_2 = st.tabs(["Select From Existing Games", "Start A New Match"])
 with tab_1:
     matches_list = connector.get_matches()
     if matches_list is not None and len(matches_list) > 0:
-        match_id_list = list(set([x["match_id"] for x in matches_list]))
+        matches_list = sorted(matches_list, 
+                              key=lambda x: (x["match_start_date"], x["match_start_time"]), 
+                              reverse=True)
+        match_id_list = list([x["match_id"] for x in matches_list])
     else:
         match_id_list = []
     match_id_in = st.selectbox("Select a Match to View Details/Score:", match_id_list, index=None, 
