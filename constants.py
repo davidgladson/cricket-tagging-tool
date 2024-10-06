@@ -16,6 +16,8 @@ SHOT_TYPE_OPTIONS = ["DEFENDED", "CUT_SHOT", "FLICK", "ON_DRIVE", "PULL", "LEG_G
                      "DROP_AND_RUN", "PADDLE_AWAY", "REVERSE_SCOOP", "LATE_CUT", "MISSED", "STEP_OUT_AND_DRIVE", "STEP_OUT_AND_LOFT", 
                      "STRAIGHT_TO_BOWLER"]
 
+WAGON_ZONE_OPTIONS = ["Zone 1", "Zone 2", "Zone 3", "Zone 4", "Zone 5", "Zone 6", "Zone 7", "Zone 8"]
+
 BALL_LINE_OPTIONS = ["On Stumps", "Outside Off Stump", "Outside Leg Stump", "Wide Outside Off Stump", "Wide Outside Leg Stump"]
 BALL_LENGTH_OPTIONS = ["Short", "Short of Good Length", "Good Length", "Full", "Yorker", "Full Toss"]
 
@@ -25,11 +27,27 @@ SHOT_TYPE_OPTIONS.sort()
 BALL_LINE_OPTIONS.sort()
 BALL_LENGTH_OPTIONS.sort()
 
+BBB_BASE_DATA_COLUMNS = ["match_id", "innings_num", "over_num", "ball_num", "ball_id",
+                         "batting_team", "batter_id", "batter_name", "non_striker_id", "non_striker_name", 
+                         "bowling_team", "bowler_id", "bowler_name",
+                         "runs_scored", "batter_runs", 
+                         "is_extras", "extras_type", "extras_runs", 
+                         "wide_runs", "no_ball_runs", "byes_runs", "leg_byes_runs", 
+                         "is_wicket", "wicket_type", "out_batter", "fielder_name", "is_sub_fielder",
+                         "current_runs", "current_wickets"]
+
+BBB_ADVANCED_DATA_COLUMNS = ["match_id", "innings_num", "over_num", "ball_num", "ball_id",
+                            "ball_speed", "ball_line", "ball_length", 
+                            "shot_type", "batter_control", "wagon_zone"]
+
+BBB_MERGE_COLUMNS = ["match_id", "innings_num", "over_num", "ball_num", "ball_id"]
+
+
 BBB_DOWNLOADABLE_COLUMNS = ["match_id", "innings_num", "over_num", "ball_num", "ball_id",
                             "batting_team", "batter_id", "batter_name", "batting_hand", "non_striker_id", "non_striker_name", 
                             "bowling_team", "bowler_id", "bowler_name", "bowling_hand", "bowling_pace_spin", "bowling_style",
                             "ball_speed", "ball_line", "ball_length", 
-                            "runs_scored", "batter_runs", "shot_type", "batter_control",
+                            "runs_scored", "batter_runs", "shot_type", "batter_control", "wagon_zone",
                             "is_extras", "extras_type", "extras_runs", 
                             "wide_runs", "no_ball_runs", "byes_runs", "leg_byes_runs", 
                             "is_wicket", "wicket_type", "out_batter", "fielder_name", "is_sub_fielder",
@@ -46,4 +64,4 @@ SQUADS_COLLECTION = "squads"
 MATCH_LIST_COLLECTION = "matches"
 BALL_BY_BALL_DATA_COLLECTION = "ball_by_ball"
 LINEUPS_COLLECTION = "lineups"
-
+BALL_BY_BALL_DATA_ADVANCED_COLLECTION = "ball_by_ball_advanced"

@@ -1,7 +1,8 @@
 import pymongo
 import argparse
 
-from constants import DATABASE_NAME, SQUADS_COLLECTION, MATCH_LIST_COLLECTION, BALL_BY_BALL_DATA_COLLECTION, LINEUPS_COLLECTION
+from constants import DATABASE_NAME, SQUADS_COLLECTION, MATCH_LIST_COLLECTION, BALL_BY_BALL_DATA_COLLECTION, LINEUPS_COLLECTION, \
+    BALL_BY_BALL_DATA_ADVANCED_COLLECTION
 
 
 class MongoDBConnector(object):
@@ -13,6 +14,7 @@ class MongoDBConnector(object):
         self.match_list_collection = self.get_or_create_collection(MATCH_LIST_COLLECTION)
         self.bbb_data_collection = self.get_or_create_collection(BALL_BY_BALL_DATA_COLLECTION)
         self.lineups_collection = self.get_or_create_collection(LINEUPS_COLLECTION)
+        self.bbb_data_advanced_collection = self.get_or_create_collection(BALL_BY_BALL_DATA_ADVANCED_COLLECTION)
     
     def get_or_create_collection(self, collection_name):
         if collection_name in self.data_db.list_collection_names():
@@ -47,8 +49,12 @@ class MongoDBConnector(object):
         
         lineups = self.get_data(self.lineups_collection, filter_in=filter_in)
         lineups.sort(key=lambda x: x["player_name"])
+        
+        bbb_data_advanced = self.get_data(self.bbb_data_advanced_collection, filter_in=filter_in)
+        bbb_data_advanced.sort(key=lambda x: x["ball_id"])
                 
         match_details["ball_by_ball_data"] = bbb_data
+        match_details["ball_by_ball_data_advanced"] = bbb_data_advanced
         match_details["lineups"] = lineups
         
         return match_details
@@ -62,8 +68,12 @@ class MongoDBConnector(object):
     def add_new_bbb(self, bbb_list):
         self.bbb_data_collection.insert_many(bbb_list)
         
+    def add_new_bbb_advanced(self, bbb_advanced_list):
+        self.bbb_data_advanced_collection.insert_many(bbb_advanced_list)
+        
     def fully_reset_db(self):
         self.bbb_data_collection.delete_many({})
+        self.bbb_data_advanced_collection.delete_many({})
         self.lineups_collection.delete_many({})
         self.match_list_collection.delete_many({})
         
@@ -75,6 +85,7 @@ class MongoDBConnector(object):
         filter_in = {"match_id": match_id}
         
         self.bbb_data_collection.delete_many(filter_in)
+        self.bbb_data_advanced_collection.delete_many(filter_in)
         self.lineups_collection.delete_many(filter_in)
         self.match_list_collection.delete_many(filter_in)
         

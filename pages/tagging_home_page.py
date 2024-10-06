@@ -99,6 +99,7 @@ with tab_1:
 
         match_details_fetched = connector.get_single_match_details(match_id=st.session_state.match_id)
         st.session_state.ball_by_ball_data = match_details_fetched["ball_by_ball_data"]
+        st.session_state.ball_by_ball_advanced_data = match_details_fetched["ball_by_ball_data_advanced"]
         
         match_venue = match_details_fetched["venue"]
         match_date = match_details_fetched["match_start_date"]
@@ -109,39 +110,68 @@ with tab_1:
         st.text("Match Venue: {}".format(match_venue))
         st.text("Match Date: {}".format(match_date))
         
-        if st.session_state.ball_by_ball_data is not None and len(st.session_state.ball_by_ball_data) > 0:
-            last_ball = st.session_state.ball_by_ball_data[-1]
-            current_over_num = last_ball["over_num"]
-            current_ball_num = last_ball["ball_num"]
-            current_over_ball_ctr = int(str(last_ball["ball_id"])[-2:])
-            current_inning = max([x["innings_num"] for x in st.session_state.ball_by_ball_data])
-            
-            st.session_state.innings_num = current_inning
-            st.session_state.over_num, st.session_state.ball_num, \
-                st.session_state.over_ball_ctr = move_to_next_ball(current_over_num, current_ball_num, current_over_ball_ctr)
-            st.session_state.runs = int(last_ball["current_runs"])
-            st.session_state.wickets = int(last_ball["current_wickets"])
-            st.session_state.prev_over_num = int(last_ball["over_num"])
-            st.session_state.prev_ball_num = int(last_ball["ball_num"])
-            
-            over_string = get_over_string(st.session_state.prev_over_num, st.session_state.prev_ball_num)
+        col_1, col_2 = st.columns(2)
+        
+        with col_1:
+            st.text("Ball By Ball Tagging Status:")
+            if st.session_state.ball_by_ball_data is not None and len(st.session_state.ball_by_ball_data) > 0:
+                last_ball = st.session_state.ball_by_ball_data[-1]
+                current_over_num = last_ball["over_num"]
+                current_ball_num = last_ball["ball_num"]
+                current_over_ball_ctr = int(str(last_ball["ball_id"])[-2:])
+                current_inning = max([x["innings_num"] for x in st.session_state.ball_by_ball_data])
+                
+                st.session_state.innings_num = current_inning
+                st.session_state.over_num, st.session_state.ball_num, \
+                    st.session_state.over_ball_ctr = move_to_next_ball(current_over_num, current_ball_num, current_over_ball_ctr)
+                st.session_state.runs = int(last_ball["current_runs"])
+                st.session_state.wickets = int(last_ball["current_wickets"])
+                st.session_state.prev_over_num = int(last_ball["over_num"])
+                st.session_state.prev_ball_num = int(last_ball["ball_num"])
+                
+                over_string = get_over_string(st.session_state.prev_over_num, st.session_state.prev_ball_num)
 
-            st.text("Current Inning: {}".format(st.session_state.innings_num))
-            st.text("Current Score: {}/{} {}".format(st.session_state.runs, st.session_state.wickets, over_string))
-            st.text("Current Run Rate: {:.2f}".format(get_current_run_rate(st.session_state.runs, 
-                                                                           st.session_state.prev_over_num, 
-                                                                           st.session_state.prev_ball_num)))
-    
-        else:
-            st.text("No Ball By Ball Data Available Yet!")
-            st.session_state.innings_num = 1
-            st.session_state.over_num, st.session_state.ball_num, st.session_state.over_ball_ctr = 1, 1, 1
-            st.session_state.runs = 0
-            st.session_state.wickets = 0
+                st.text("Current Inning: {}".format(st.session_state.innings_num))
+                st.text("Current Score: {}/{} {}".format(st.session_state.runs, st.session_state.wickets, over_string))
+                st.text("Current Run Rate: {:.2f}".format(get_current_run_rate(st.session_state.runs, 
+                                                                            st.session_state.prev_over_num, 
+                                                                            st.session_state.prev_ball_num)))
+        
+            else:
+                st.text("No Ball By Ball Data Available Yet!")
+                st.session_state.innings_num = 1
+                st.session_state.over_num, st.session_state.ball_num, st.session_state.over_ball_ctr = 1, 1, 1
+                st.session_state.runs = 0
+                st.session_state.wickets = 0
+        
+        with col_2:    
+            st.text("Advanced Parameters Tagging Status:")        
+            if st.session_state.ball_by_ball_advanced_data is not None and len(st.session_state.ball_by_ball_advanced_data) > 0:
+                last_ball = st.session_state.ball_by_ball_advanced_data[-1]
+                current_over_num = last_ball["over_num"]
+                current_ball_num = last_ball["ball_num"]
+                current_over_ball_ctr = int(str(last_ball["ball_id"])[-2:])
+                current_inning = max([x["innings_num"] for x in st.session_state.ball_by_ball_advanced_data])
+                
+                st.session_state.innings_num_adv = current_inning
+                st.session_state.over_num_adv, st.session_state.ball_num_adv, \
+                    st.session_state.over_ball_ctr_adv = move_to_next_ball(current_over_num, current_ball_num, current_over_ball_ctr)
+                st.session_state.prev_over_num_adv = int(last_ball["over_num"])
+                st.session_state.prev_ball_num_adv = int(last_ball["ball_num"])
+                
+                over_string = get_over_string(st.session_state.prev_over_num_adv, st.session_state.prev_ball_num_adv)
+
+                st.text("Current Inning: {}".format(st.session_state.innings_num_adv))
+                st.text("Current Overs Finished: {}".format(over_string))
+        
+            else:
+                st.text("No Advanced Ball By Ball Data Available Yet!")
+                st.session_state.innings_num_adv = 1
+                st.session_state.over_num_adv, st.session_state.ball_num_adv, st.session_state.over_ball_ctr_adv = 1, 1, 1
             
     st.divider()
 
-    sub_col_1, sub_col_2, sub_col_3, sub_col_4, sub_col_5 = st.columns(5)
+    sub_col_1, sub_col_2, sub_col_3, sub_col_4, sub_col_5, sub_col_6 = st.columns(6)
         
     with sub_col_1:
         current_inning_num_index = st.session_state.get("innings_num", None)
@@ -156,8 +186,16 @@ with tab_1:
             else:
                 st.session_state.innings_num = int(innings_num_in)
             st.switch_page("pages/tagging_page.py")
-            
+    
     with sub_col_3:
+        if st.button("Start/Resume Advanced Parameters Scoring"):
+            if st.session_state.match_id is None or innings_num_in is None:
+                st.rerun()
+            else:
+                st.session_state.innings_num = int(innings_num_in)
+            st.switch_page("pages/tagging_page_advanced.py")
+            
+    with sub_col_4:
         if st.session_state.ball_by_ball_data is not None and len(st.session_state.ball_by_ball_data) > 0:
             bbb_data_download = prepare_download_bbb_data(connector, st.session_state.match_id)
             download_disabled = False
@@ -172,12 +210,12 @@ with tab_1:
             mime="text/csv", 
             disabled=download_disabled)
 
-    with sub_col_4:
+    with sub_col_5:
         scorecard_disabled = (st.session_state.ball_by_ball_data is None) or (len(st.session_state.ball_by_ball_data) <= 0)
         if st.button("View Scorecard", disabled=scorecard_disabled):
             st.switch_page("pages/scorecard_page.py")
             
-    with sub_col_5:
+    with sub_col_6:
         if st.button("Go To Analysis Home"):
             st.switch_page("pages/analysis_home_page.py")
 
