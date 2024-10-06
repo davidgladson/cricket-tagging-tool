@@ -96,6 +96,11 @@ with tab_1:
     
     if st.button("Select Match"):
         st.session_state.match_id = match_id_in
+        
+        if st.session_state.match_id is None:
+            st.session_state.ball_by_ball_data = None
+            st.session_state.ball_by_ball_advanced_data = None
+            st.rerun()
 
         match_details_fetched = connector.get_single_match_details(match_id=st.session_state.match_id)
         st.session_state.ball_by_ball_data = match_details_fetched["ball_by_ball_data"]
@@ -113,7 +118,7 @@ with tab_1:
         col_1, col_2 = st.columns(2)
         
         with col_1:
-            st.text("Ball By Ball Tagging Status:")
+            st.text("Basic Ball By Ball Tagging Status:")
             if st.session_state.ball_by_ball_data is not None and len(st.session_state.ball_by_ball_data) > 0:
                 last_ball = st.session_state.ball_by_ball_data[-1]
                 current_over_num = last_ball["over_num"]
@@ -143,7 +148,7 @@ with tab_1:
                 st.session_state.over_num, st.session_state.ball_num, st.session_state.over_ball_ctr = 1, 1, 1
                 st.session_state.runs = 0
                 st.session_state.wickets = 0
-        
+
         with col_2:    
             st.text("Advanced Parameters Tagging Status:")        
             if st.session_state.ball_by_ball_advanced_data is not None and len(st.session_state.ball_by_ball_advanced_data) > 0:
@@ -170,53 +175,79 @@ with tab_1:
                 st.session_state.over_num_adv, st.session_state.ball_num_adv, st.session_state.over_ball_ctr_adv = 1, 1, 1
             
     st.divider()
-
-    sub_col_1, sub_col_2, sub_col_3, sub_col_4, sub_col_5, sub_col_6 = st.columns(6)
-        
+    
+    sub_col_1, sub_col_2 = st.columns(2)
+    
     with sub_col_1:
-        current_inning_num_index = st.session_state.get("innings_num", None)
-        if current_inning_num_index is not None:
-            current_inning_num_index = int(current_inning_num_index) - 1
-        innings_num_in= st.selectbox("Select Innings: ", [1,2,3,4], index=current_inning_num_index, disabled=True)
-    
-    with sub_col_2:
-        if st.button("Start/Resume Scoring"):
-            if st.session_state.match_id is None or innings_num_in is None:
+        if st.button("Start/Resume Scoring", disabled=(st.session_state.match_id is None), use_container_width=True):
+            if st.session_state.match_id is None or st.session_state.innings_num is None:
                 st.rerun()
-            else:
-                st.session_state.innings_num = int(innings_num_in)
             st.switch_page("pages/tagging_page.py")
-    
-    with sub_col_3:
-        if st.button("Start/Resume Advanced Parameters Scoring"):
-            if st.session_state.match_id is None or innings_num_in is None:
-                st.rerun()
-            else:
-                st.session_state.innings_num = int(innings_num_in)
-            st.switch_page("pages/tagging_page_advanced.py")
             
-    with sub_col_4:
         if st.session_state.ball_by_ball_data is not None and len(st.session_state.ball_by_ball_data) > 0:
-            bbb_data_download = prepare_download_bbb_data(connector, st.session_state.match_id)
-            download_disabled = False
+            bbb_base_data_download = prepare_download_bbb_data(connector, st.session_state.match_id, data_mode="base")
+            base_data_download_disabled = False
         else:
-            bbb_data_download = pd.DataFrame()
-            download_disabled = True
+            bbb_base_data_download = pd.DataFrame()
+            base_data_download_disabled = True
             
         st.download_button(
-            label="Download Data",
-            data=bbb_data_download.to_csv(index=False).encode("utf-8"),
+            label="Download Basic Ball By Ball Data",
+            data=bbb_base_data_download.to_csv(index=False).encode("utf-8"),
             file_name="{}_ball_by_ball_data.csv".format(st.session_state.match_id),
             mime="text/csv", 
-            disabled=download_disabled)
+            disabled=base_data_download_disabled, 
+            use_container_width=True)
 
-    with sub_col_5:
+    
+    with sub_col_2:
+        if st.button("Start/Resume Advanced Parameters Scoring", disabled=(st.session_state.match_id is None), use_container_width=True):
+            if st.session_state.match_id is None or st.session_state.innings_num_adv is None:
+                st.rerun()
+            st.switch_page("pages/tagging_page_advanced.py")
+            
+        if st.session_state.ball_by_ball_advanced_data is not None and len(st.session_state.ball_by_ball_advanced_data) > 0:
+            bbb_advanced_data_download = prepare_download_bbb_data(connector, st.session_state.match_id, data_mode="advanced")
+            advanced_data_download_disabled = False
+        else:
+            bbb_advanced_data_download = pd.DataFrame()
+            advanced_data_download_disabled = True
+            
+        st.download_button(
+            label="Download Advanced Parameters Data",
+            data=bbb_advanced_data_download.to_csv(index=False).encode("utf-8"),
+            file_name="{}_ball_by_ball_data.csv".format(st.session_state.match_id),
+            mime="text/csv", 
+            disabled=advanced_data_download_disabled, 
+            use_container_width=True)    
+
+    st.divider()
+
+    sub_col_1, sub_col_2, sub_col_3 = st.columns(3)
+        
+    with sub_col_1:
+        if st.session_state.ball_by_ball_data is not None and len(st.session_state.ball_by_ball_data) > 0:
+            bbb_base_data_download = prepare_download_bbb_data(connector, st.session_state.match_id, data_mode="combined")
+            base_data_download_disabled = False
+        else:
+            bbb_base_data_download = pd.DataFrame()
+            base_data_download_disabled = True
+            
+        st.download_button(
+            label="Download Consolidated Data",
+            data=bbb_base_data_download.to_csv(index=False).encode("utf-8"),
+            file_name="{}_ball_by_ball_data.csv".format(st.session_state.match_id),
+            mime="text/csv", 
+            disabled=base_data_download_disabled, 
+            use_container_width=True)
+
+    with sub_col_2:
         scorecard_disabled = (st.session_state.ball_by_ball_data is None) or (len(st.session_state.ball_by_ball_data) <= 0)
-        if st.button("View Scorecard", disabled=scorecard_disabled):
+        if st.button("View Scorecard", disabled=scorecard_disabled, use_container_width=True):
             st.switch_page("pages/scorecard_page.py")
             
-    with sub_col_6:
-        if st.button("Go To Analysis Home"):
+    with sub_col_3:
+        if st.button("Go To Analysis Home", use_container_width=True):
             st.switch_page("pages/analysis_home_page.py")
 
 with tab_2:

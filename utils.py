@@ -2,7 +2,7 @@ import streamlit as st
 import os
 import pandas as pd
 
-from constants import BBB_DOWNLOADABLE_COLUMNS
+from constants import BBB_DOWNLOADABLE_COLUMNS, BBB_BASE_DATA_COLUMNS, BBB_ADVANCED_DATA_COLUMNS, BBB_MERGE_COLUMNS
 
 @st.cache_data
 def create_path_if_not_exists(dir_name):
@@ -81,30 +81,52 @@ def get_lineup_display_data(squads, team_name):
     return team_squad, column_config
 
 
-def prepare_download_bbb_data(conn, match_id):
+def prepare_download_bbb_data(conn, match_id, data_mode):
     match_details_fetched = conn.get_single_match_details(match_id)
     
     if match_details_fetched is None:
         return pd.DataFrame()
     
     ball_by_ball_data = pd.DataFrame(match_details_fetched["ball_by_ball_data"])
+    ball_by_ball_advanced_data = pd.DataFrame(match_details_fetched["ball_by_ball_data_advanced"])    
     lineups = pd.DataFrame(match_details_fetched["lineups"])
     
-    bbb_batter_info = ball_by_ball_data.merge(lineups[["player_id", "player_name", "batting_hand"]], 
-                                              left_on=["batter_id", "batter_name"], 
-                                              right_on=["player_id", "player_name"])
+    if data_mode == "base":
+        data_candidate_df = ball_by_ball_data.copy()
+        
+    elif data_mode == "advanced":
+        data_candidate_df = ball_by_ball_advanced_data[BBB_ADVANCED_DATA_COLUMNS]
+        
+    elif data_mode == "combined":
+        if ball_by_ball_advanced_data is not None and len(ball_by_ball_advanced_data) > 0:
+            data_candidate_df = ball_by_ball_data[BBB_BASE_DATA_COLUMNS].merge(ball_by_ball_advanced_data[BBB_ADVANCED_DATA_COLUMNS], 
+                                                                               on=BBB_MERGE_COLUMNS, 
+                                                                               how="left")
+        else:
+            data_candidate_df = ball_by_ball_data.copy()        
     
-    bbb_with_bowler_info = bbb_batter_info.merge(lineups[["player_id", "player_name", 
-                                                          "bowling_hand", "bowling_pace_spin", "bowling_style"]], 
-                                                 left_on=["bowler_id", "bowler_name"], 
-                                                 right_on=["player_id", "player_name"])
+    else:
+        print("Download Mode Not Supported!")
+        return pd.DataFrame()
     
-    try:
-        bbb_downloadable = bbb_with_bowler_info[BBB_DOWNLOADABLE_COLUMNS]
-    except Exception as e:
-        bbb_downloadable = bbb_with_bowler_info.copy()
+    if data_mode in ["base", "combined"]:
+        bbb_batter_info = data_candidate_df.merge(lineups[["player_id", "player_name", "batting_hand"]], 
+                                                left_on=["batter_id", "batter_name"], 
+                                                right_on=["player_id", "player_name"])
+        
+        bbb_with_bowler_info = bbb_batter_info.merge(lineups[["player_id", "player_name", 
+                                                            "bowling_hand", "bowling_pace_spin", "bowling_style"]], 
+                                                    left_on=["bowler_id", "bowler_name"], 
+                                                    right_on=["player_id", "player_name"])
+        try:
+            final_downloadable_df = bbb_with_bowler_info[BBB_DOWNLOADABLE_COLUMNS]
+        except Exception as e:
+            final_downloadable_df = bbb_with_bowler_info.copy()
     
-    return bbb_downloadable
+    else:
+        final_downloadable_df = data_candidate_df.copy()
+    
+    return final_downloadable_df
 
 
 def get_next_ball_players(last_ball_row):    
