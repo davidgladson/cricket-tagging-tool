@@ -38,7 +38,8 @@ BBB_BASE_DATA_COLUMNS = ["match_id", "innings_num", "over_num", "ball_num", "bal
 
 BBB_ADVANCED_DATA_COLUMNS = ["match_id", "innings_num", "over_num", "ball_num", "ball_id",
                             "ball_speed", "ball_line", "ball_length", 
-                            "shot_type", "batter_control", "wagon_zone"]
+                            "shot_type", "batter_control", "wagon_zone", 
+                            "is_extras", "extras_type"]
 
 BBB_MERGE_COLUMNS = ["match_id", "innings_num", "over_num", "ball_num", "ball_id"]
 

@@ -78,7 +78,7 @@ def connect_db(db_uri):
 
 connector = connect_db(DB_URI)
 
-st.write("#### Welcome to Cricket Tagging Tool!")
+st.write("### Welcome to Cricket Tagging Tool!")
 
 tab_1, tab_2 = st.tabs(["Select From Existing Games", "Start A New Match"])
 
@@ -111,14 +111,14 @@ with tab_1:
         team_1_name = match_details_fetched["team_1"]
         team_2_name = match_details_fetched["team_2"]
 
-        st.text("{} vs {}".format(team_1_name, team_2_name))
-        st.text("Match Venue: {}".format(match_venue))
-        st.text("Match Date: {}".format(match_date))
+        st.write("#### {} vs {}".format(team_1_name, team_2_name))
+        st.write("Match Venue: {}".format(match_venue))
+        st.write("Match Date: {}".format(match_date))
         
         col_1, col_2 = st.columns(2)
         
         with col_1:
-            st.text("Basic Ball By Ball Tagging Status:")
+            st.write("###### Basic Ball By Ball Tagging Status:")
             if st.session_state.ball_by_ball_data is not None and len(st.session_state.ball_by_ball_data) > 0:
                 last_ball = st.session_state.ball_by_ball_data[-1]
                 current_over_num = last_ball["over_num"]
@@ -136,21 +136,21 @@ with tab_1:
                 
                 over_string = get_over_string(st.session_state.prev_over_num, st.session_state.prev_ball_num)
 
-                st.text("Current Inning: {}".format(st.session_state.innings_num))
-                st.text("Current Score: {}/{} {}".format(st.session_state.runs, st.session_state.wickets, over_string))
-                st.text("Current Run Rate: {:.2f}".format(get_current_run_rate(st.session_state.runs, 
+                st.write("Current Inning: {}".format(st.session_state.innings_num))
+                st.write("Current Score: {}/{} {}".format(st.session_state.runs, st.session_state.wickets, over_string))
+                st.write("Current Run Rate: {:.2f}".format(get_current_run_rate(st.session_state.runs, 
                                                                             st.session_state.prev_over_num, 
                                                                             st.session_state.prev_ball_num)))
         
             else:
-                st.text("No Ball By Ball Data Available Yet!")
+                st.write("No Ball By Ball Data Available Yet!")
                 st.session_state.innings_num = 1
                 st.session_state.over_num, st.session_state.ball_num, st.session_state.over_ball_ctr = 1, 1, 1
                 st.session_state.runs = 0
                 st.session_state.wickets = 0
 
         with col_2:    
-            st.text("Advanced Parameters Tagging Status:")        
+            st.write("###### Advanced Parameters Tagging Status:")        
             if st.session_state.ball_by_ball_advanced_data is not None and len(st.session_state.ball_by_ball_advanced_data) > 0:
                 last_ball = st.session_state.ball_by_ball_advanced_data[-1]
                 current_over_num = last_ball["over_num"]
@@ -166,11 +166,11 @@ with tab_1:
                 
                 over_string = get_over_string(st.session_state.prev_over_num_adv, st.session_state.prev_ball_num_adv)
 
-                st.text("Current Inning: {}".format(st.session_state.innings_num_adv))
-                st.text("Current Overs Finished: {}".format(over_string))
+                st.write("Current Inning: {}".format(st.session_state.innings_num_adv))
+                st.write("Current Overs Finished: {}".format(over_string))
         
             else:
-                st.text("No Advanced Ball By Ball Data Available Yet!")
+                st.write("No Advanced Ball By Ball Data Available Yet!")
                 st.session_state.innings_num_adv = 1
                 st.session_state.over_num_adv, st.session_state.ball_num_adv, st.session_state.over_ball_ctr_adv = 1, 1, 1
             
@@ -194,7 +194,7 @@ with tab_1:
         st.download_button(
             label="Download Basic Ball By Ball Data",
             data=bbb_base_data_download.to_csv(index=False).encode("utf-8"),
-            file_name="{}_ball_by_ball_data.csv".format(st.session_state.match_id),
+            file_name="{}_ball_by_ball_data_BASIC.csv".format(st.session_state.match_id),
             mime="text/csv", 
             disabled=base_data_download_disabled, 
             use_container_width=True)
@@ -216,7 +216,7 @@ with tab_1:
         st.download_button(
             label="Download Advanced Parameters Data",
             data=bbb_advanced_data_download.to_csv(index=False).encode("utf-8"),
-            file_name="{}_ball_by_ball_data.csv".format(st.session_state.match_id),
+            file_name="{}_ball_by_ball_data_ADVANCED.csv".format(st.session_state.match_id),
             mime="text/csv", 
             disabled=advanced_data_download_disabled, 
             use_container_width=True)    
@@ -236,7 +236,7 @@ with tab_1:
         st.download_button(
             label="Download Consolidated Data",
             data=bbb_base_data_download.to_csv(index=False).encode("utf-8"),
-            file_name="{}_ball_by_ball_data.csv".format(st.session_state.match_id),
+            file_name="{}_ball_by_ball_data_FULL.csv".format(st.session_state.match_id),
             mime="text/csv", 
             disabled=base_data_download_disabled, 
             use_container_width=True)
