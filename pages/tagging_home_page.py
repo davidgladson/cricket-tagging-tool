@@ -46,6 +46,9 @@ if "match_id" not in st.session_state:
     
 if "ball_by_ball_data" not in st.session_state:
     st.session_state.ball_by_ball_data = None
+    
+if "ball_by_ball_advanced_data" not in st.session_state:
+    st.session_state.ball_by_ball_advanced_data = None
 
 def store_match_details(conn, venue, date, time, team_1_name, team_1_df, team_2_name, team_2_df, toss_winner, toss_choice):
     unique_match_id = "{}_{}_{}".format(str(team_1_name).replace(" ", "-").upper().strip(), 

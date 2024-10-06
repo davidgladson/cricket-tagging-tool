@@ -191,6 +191,10 @@ with col_1:
         
     st.text("Overs Finished: {}".format(over_string))
     
+    
+with col_2:
+    st.image("images/wagon_zone_info.png", caption="Wagon Zones for Reference")
+    
 st.divider()
     
 col_1, col_2, col_3, col_4, col_5, col_6 = st.columns(6)    
