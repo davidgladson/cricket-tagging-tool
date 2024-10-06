@@ -26,7 +26,7 @@ def check_password():
 
 # Check if the password is correct before allowing access to this page
 if not check_password():
-    st.stop()
+    st.switch_page("home_page.py")
     
 #============================================Password Check Function===================
 
