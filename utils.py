@@ -95,7 +95,7 @@ def prepare_download_bbb_data(conn, match_id, data_mode):
         data_candidate_df = ball_by_ball_data.copy()
         
     elif data_mode == "advanced":
-        data_candidate_df = ball_by_ball_advanced_data[BBB_ADVANCED_DATA_COLUMNS]
+        data_candidate_df = ball_by_ball_advanced_data[BBB_ADVANCED_DATA_COLUMNS + ["is_extras", "extras_type"]]
         
     elif data_mode == "combined":
         if ball_by_ball_advanced_data is not None and len(ball_by_ball_advanced_data) > 0:

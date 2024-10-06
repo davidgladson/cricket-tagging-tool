@@ -34,6 +34,7 @@ def match_details_success(match_id_in):
     st.write("Match {} created successfully!".format(match_id_in))
     
 def reset_inputs():
+    st.session_state.cricinfo_match_id = None
     st.session_state.match_venue = None
     st.session_state.team_1_in = None
     st.session_state.team_2_in = None
@@ -50,12 +51,14 @@ if "ball_by_ball_data" not in st.session_state:
 if "ball_by_ball_advanced_data" not in st.session_state:
     st.session_state.ball_by_ball_advanced_data = None
 
-def store_match_details(conn, venue, date, time, team_1_name, team_1_df, team_2_name, team_2_df, toss_winner, toss_choice):
+def store_match_details(conn, cricinfo_match_id, venue, date, time, team_1_name, team_1_df, team_2_name, team_2_df, 
+                        toss_winner, toss_choice):
     unique_match_id = "{}_{}_{}".format(str(team_1_name).replace(" ", "-").upper().strip(), 
                                         str(team_2_name).replace(" ", "-").upper().strip(), 
                                         date.strftime('%Y%m%d'))
     
     match_details = [{
+        "cricinfo_match_id": cricinfo_match_id if cricinfo_match_id is not None else "NOT_AVAILABLE",
         "match_id": unique_match_id, 
         "venue": venue, 
         "match_start_date": date.strftime("%Y-%m-%d"),
@@ -146,7 +149,7 @@ with tab_1:
                                                                             st.session_state.prev_ball_num)))
         
             else:
-                st.write("No Ball By Ball Data Available Yet!")
+                st.write("No Basic Ball By Ball Data Available Yet!")
                 st.session_state.innings_num = 1
                 st.session_state.over_num, st.session_state.ball_num, st.session_state.over_ball_ctr = 1, 1, 1
                 st.session_state.runs = 0
@@ -173,7 +176,7 @@ with tab_1:
                 st.write("Current Overs Finished: {}".format(over_string))
         
             else:
-                st.write("No Advanced Ball By Ball Data Available Yet!")
+                st.write("No Advanced Parameters Data Available Yet!")
                 st.session_state.innings_num_adv = 1
                 st.session_state.over_num_adv, st.session_state.ball_num_adv, st.session_state.over_ball_ctr_adv = 1, 1, 1
             
@@ -258,7 +261,11 @@ with tab_2:
     TEAM_LIST = squads.team_name.unique().tolist()
     
     # Match Details Input Section
-            
+    
+    cricinfo_match_id_in = st.text_input("Cricinfo Match ID:", key="cricinfo_match_id")
+    
+    st.divider()
+    
     col_1, col_2 = st.columns(2)
 
     with col_1:
@@ -310,6 +317,7 @@ with tab_2:
     _, _, col_3, _, _ = st.columns(5)
         
     with col_3:
-        st.button("Save Match Details", on_click=store_match_details, args=(connector, venue_in, date_in, time_in, 
+        st.button("Save Match Details", on_click=store_match_details, args=(connector, cricinfo_match_id_in, 
+                                                                            venue_in, date_in, time_in, 
                                                                             team_name_1_in, team_list_1_in, team_name_2_in, 
                                                                             team_list_2_in, toss_winner_in, toss_choice_in))

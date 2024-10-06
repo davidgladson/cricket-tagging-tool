@@ -119,6 +119,7 @@ def save_and_next_ball(conn, over_num, ball_num,
         return 
         
     bbb_advanced_data_list = [{
+        "cricinfo_match_id": st.session_state.cricinfo_match_id,
         "match_id": st.session_state.match_id, 
         "innings_num": st.session_state.innings_num_adv, 
         "over_num": over_num,
@@ -156,8 +157,15 @@ if ("match_id" not in st.session_state) or ("innings_num" not in st.session_stat
     st.switch_page("pages/tagging_home_page.py")
     
 match_details_fetched = connector.get_single_match_details(match_id=st.session_state.match_id)
+
+if match_details_fetched is None:
+    st.warning("Match Does Not Exist!", icon="⚠️")
+    st.switch_page("pages/tagging_home_page.py")
+
 ball_by_ball_data = match_details_fetched.get("ball_by_ball_data_advanced", None)
 players_data_fetched = match_details_fetched.get("lineups", None)
+
+st.session_state.cricinfo_match_id = match_details_fetched["cricinfo_match_id"]
 
 match_venue = match_details_fetched["venue"]
 match_date = match_details_fetched["match_start_date"]

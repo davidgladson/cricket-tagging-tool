@@ -27,7 +27,7 @@ SHOT_TYPE_OPTIONS.sort()
 BALL_LINE_OPTIONS.sort()
 BALL_LENGTH_OPTIONS.sort()
 
-BBB_BASE_DATA_COLUMNS = ["match_id", "innings_num", "over_num", "ball_num", "ball_id",
+BBB_BASE_DATA_COLUMNS = ["cricinfo_match_id", "match_id", "innings_num", "over_num", "ball_num", "ball_id",
                          "batting_team", "batter_id", "batter_name", "non_striker_id", "non_striker_name", 
                          "bowling_team", "bowler_id", "bowler_name",
                          "runs_scored", "batter_runs", 
@@ -36,15 +36,14 @@ BBB_BASE_DATA_COLUMNS = ["match_id", "innings_num", "over_num", "ball_num", "bal
                          "is_wicket", "wicket_type", "out_batter", "fielder_name", "is_sub_fielder",
                          "current_runs", "current_wickets"]
 
-BBB_ADVANCED_DATA_COLUMNS = ["match_id", "innings_num", "over_num", "ball_num", "ball_id",
+BBB_ADVANCED_DATA_COLUMNS = ["cricinfo_match_id", "match_id", "innings_num", "over_num", "ball_num", "ball_id",
                             "ball_speed", "ball_line", "ball_length", 
-                            "shot_type", "batter_control", "wagon_zone", 
-                            "is_extras", "extras_type"]
+                            "shot_type", "batter_control", "wagon_zone"]
 
-BBB_MERGE_COLUMNS = ["match_id", "innings_num", "over_num", "ball_num", "ball_id"]
+BBB_MERGE_COLUMNS = ["cricinfo_match_id", "match_id", "innings_num", "over_num", "ball_num", "ball_id"]
 
 
-BBB_DOWNLOADABLE_COLUMNS = ["match_id", "innings_num", "over_num", "ball_num", "ball_id",
+BBB_DOWNLOADABLE_COLUMNS = ["cricinfo_match_id", "match_id", "innings_num", "over_num", "ball_num", "ball_id",
                             "batting_team", "batter_id", "batter_name", "batting_hand", "non_striker_id", "non_striker_name", 
                             "bowling_team", "bowler_id", "bowler_name", "bowling_hand", "bowling_pace_spin", "bowling_style",
                             "ball_speed", "ball_line", "ball_length", 
