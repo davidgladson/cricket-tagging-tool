@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 import os
 
-from constants import EXTRAS_LIST, WICKET_TYPE_LIST, SHOT_TYPE_OPTIONS, DB_URI, BALL_LINE_OPTIONS, BALL_LENGTH_OPTIONS
+from constants import EXTRAS_LIST, WICKET_TYPE_LIST, SHOT_TYPE_OPTIONS, DB_URI, BALL_LINE_OPTIONS, BALL_LENGTH_OPTIONS, \
+    WAGON_ZONE_OPTIONS
 
 from utils import get_over_string, get_current_run_rate, get_next_ball_players
 
@@ -26,7 +27,7 @@ def check_password():
 
 # Check if the password is correct before allowing access to this page
 if not check_password():
-    st.stop()
+    st.switch_page("home_page.py")
     
 #============================================Password Check Function===================
 
@@ -84,7 +85,6 @@ def clear_match_state():
     del st.session_state.over_ball_ctr
     del st.session_state.runs
     del st.session_state.wickets
-    # del st.session_state.match_ball_by_ball_path
     del st.session_state.match_id
     del st.session_state.out_batters
     del st.session_state.prev_over_num
@@ -114,6 +114,7 @@ def reset_inputs():
     st.session_state.batter_runs = 0
     st.session_state.shot_type = None
     st.session_state.batter_control_in = False
+    st.session_state.wagon_zone = None
     st.session_state.is_extras = False
     st.session_state.extras_type = None
     st.session_state.extras_runs = 0
@@ -132,7 +133,7 @@ def save_and_next_ball(conn, over_num, ball_num,
                        batting_team_name, batter_name, batter_id, non_striker_name, non_striker_id, 
                        bowling_team_name, bowler_name, bowler_id, 
                        ball_speed, line, length,
-                       batter_runs, shot_type, batter_control,
+                       batter_runs, shot_type, batter_control, wagon_zone,
                        is_extras, extras_type, extras_runs, 
                        is_wicket, wicket_type, out_batter, fielder_name, is_sub_fielder):
     
@@ -154,6 +155,7 @@ def save_and_next_ball(conn, over_num, ball_num,
     wide_runs, no_ball_runs, byes_runs, leg_byes_runs = parse_extras_data(extras_type, extras_runs)
         
     bbb_data_list = [{
+        "cricinfo_match_id": st.session_state.cricinfo_match_id,
         "match_id": st.session_state.match_id, 
         "innings_num": st.session_state.innings_num, 
         "over_num": over_num,
@@ -174,6 +176,7 @@ def save_and_next_ball(conn, over_num, ball_num,
         "batter_runs": batter_runs, 
         "shot_type": shot_type,
         "batter_control": None if batter_control is None else (1 if batter_control else 0),
+        "wagon_zone": wagon_zone, 
         "is_extras": is_extras, 
         "extras_type": extras_type, 
         "extras_runs": extras_runs,
@@ -214,6 +217,11 @@ if ("match_id" not in st.session_state) or ("innings_num" not in st.session_stat
     st.switch_page("pages/tagging_home_page.py")
     
 match_details_fetched = connector.get_single_match_details(match_id=st.session_state.match_id)
+
+if match_details_fetched is None:
+    st.warning("Match Does Not Exist!", icon="⚠️")
+    st.switch_page("pages/tagging_home_page.py")
+
 ball_by_ball_data = match_details_fetched.get("ball_by_ball_data", None)
 players_data_fetched = match_details_fetched.get("lineups", None)
 
@@ -223,6 +231,8 @@ if "out_batters" not in st.session_state:
         st.session_state.out_batters = set(data_df[data_df["is_wicket"]].out_batter.unique())
     else:
         st.session_state.out_batters = set()
+
+st.session_state.cricinfo_match_id = match_details_fetched["cricinfo_match_id"]
 
 match_venue = match_details_fetched["venue"]
 match_date = match_details_fetched["match_start_date"]
@@ -270,7 +280,10 @@ with col_1:
     st.text("Current Run Rate: {:.2f}".format(get_current_run_rate(st.session_state.runs, 
                                                                    st.session_state.prev_over_num, 
                                                                    st.session_state.prev_ball_num)))
-    
+      
+with col_2:
+    st.image("images/wagon_zone_info.png", caption="Wagon Zones for Reference")
+
 st.divider()
     
 col_1, col_2, col_3, col_4, col_5, col_6, col_7 = st.columns(7)    
@@ -310,11 +323,10 @@ with col_4:
     length_input = st.selectbox("Ball Length:", BALL_LENGTH_OPTIONS, index=None, key="ball_length")
 
 with col_5:
-    batter_runs_input = st.number_input("Batter Runs", value=0, min_value=0, key="batter_runs")
-    
+    batter_runs_input = st.number_input("Batter Runs", value=0, min_value=0, key="batter_runs")    
     shot_type_input = st.selectbox("Shot Type:", SHOT_TYPE_OPTIONS, index=None, key="shot_type")
-    
     batter_control_input = st.toggle("Batter In Control of the shot?", key="batter_control_in")
+    wagon_zone_input = st.selectbox("Wagon Zone:", WAGON_ZONE_OPTIONS, index=None, key="wagon_zone")
 
 with col_6:
     is_extras_input = st.checkbox("Extras?", value=False, key="is_extras")
@@ -377,6 +389,6 @@ with col_6:
                     batting_team, batter_name_input, batter_id_input, non_striker_name_input, non_striker_id_input, 
                     bowling_team, bowler_name_input, bowler_id_input, 
                     ball_speed_input, line_input, length_input,
-                    batter_runs_input, shot_type_input, batter_control_input,
+                    batter_runs_input, shot_type_input, batter_control_input, wagon_zone_input,
                     is_extras_input, extras_type_input, extras_runs_input, 
                     is_wicket_input, wicket_type_input, out_batter_input, fielder_name_input, is_sub_fielder_input))
