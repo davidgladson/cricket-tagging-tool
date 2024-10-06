@@ -185,7 +185,7 @@ with tab_1:
     sub_col_1, sub_col_2 = st.columns(2)
     
     with sub_col_1:
-        if st.button("Start/Resume Scoring", disabled=(st.session_state.match_id is None), use_container_width=True):
+        if st.button("Start/Resume Basic Scoring", disabled=(st.session_state.match_id is None), use_container_width=True):
             if st.session_state.match_id is None or st.session_state.innings_num is None:
                 st.rerun()
             st.switch_page("pages/tagging_page.py")
