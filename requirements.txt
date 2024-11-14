@@ -3,3 +3,4 @@ pymongo==4.9.1
 pandas
 numpy
 matplotlib
+plotly
