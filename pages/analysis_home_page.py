@@ -1781,7 +1781,7 @@ elif sidebar_option == "Matchup Analysis":
         result_df=result_df[['MATCH ID'] + ['YEAR'] + [col for col in result_df.columns if col not in ['MATCH ID','YEAR']]]
         st.table(result_df.style.set_table_attributes("style='font-weight: bold;'"))
         for match_id in result_df['MATCH ID']:
-                    if st.button(f'View Match {match_id}'):
+                    if st.button(f'View Match {match_id}', key=f'button_{match_id}'):
                         show_match_details(match_id)
         
                  
@@ -2786,8 +2786,6 @@ else :
     # Replace NaN with -1 and convert the column to integers
     df['wagonZone'] = df['wagonZone'].fillna(-1).astype(int)
     temp_df=df
-    
-    st.sidebar.title("Match by Match Analysis")
     # Main section - Career Stat Type selection
     option = st.selectbox("Select Analysis Dimension", ("Batsman Analysis", "Bowler Analysis"))
     batsman_selected = st.selectbox("Select Batsman", options=temp_df["batsman"].unique())
