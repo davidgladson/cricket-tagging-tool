@@ -1,12 +1,6 @@
-import streamlit as st
-import pandas as pd
-import math as mt
-import numpy as np
-import matplotlib.pyplot as plt
-
 
 st.set_page_config(page_title='WT20I Performance Analysis Portal', layout='wide')
-
+st.title('WT20I Performance Analysis Portal')
 #============================================Password Check Function===================
 # Password check function
 def check_password():
@@ -20,30 +14,85 @@ def check_password():
 if not check_password():
     st.switch_page("home_page.py")
 #================================================================================
-
-
-
-st.title('WT20I Performance Analysis Portal')
+import streamlit as st
+import pandas as pd
+import math as mt
+import numpy as np
+import matplotlib.pyplot as plt
 pdf = pd.read_csv("Analysis_datasets/Mydataset.csv",low_memory=False)
+pdfn = pd.read_csv("Analysis_datasets/wwc_2024_final.csv",low_memory=False)
+pdfn['bowler'] = pdfn['bowler'].replace('AC Jayangani', 'Chamari Athapaththu')
+pdfn['batsman'] = pdfn['batsman'].replace('AC Jayangani', 'Chamari Athapaththu')
+pdfn['non_striker'] = pdfn['non_striker'].replace('AC Jayangani', 'Chamari Athapaththu')
 idf = pd.read_csv("Analysis_datasets/lifesaver_bat.csv",low_memory=False)
+idf['batsman'] = idf['batsman'].replace('AC Jayangani', 'Chamari Athapaththu')
 info_df=pd.read_csv("Analysis_datasets/player_info_k.csv",low_memory=False)
 bpdf=pd.read_csv("Analysis_datasets/Mydataset.csv",low_memory=False)
+bpdfn = pd.read_csv("Analysis_datasets/wwc_2024_final.csv",low_memory=False)
+bpdfn['bowler'] = bpdfn['bowler'].replace('AC Jayangani', 'Chamari Athapaththu')
+bpdfn['batsman'] = bpdfn['batsman'].replace('AC Jayangani', 'Chamari Athapaththu')
+bpdfn['non_striker'] = bpdfn['non_striker'].replace('AC Jayangani', 'Chamari Athapaththu')
 bidf=pd.read_csv("Analysis_datasets/lifesaver_bowl.csv",low_memory=False)
+bidf['bowler'] = bidf['bowler'].replace('AC Jayangani', 'Chamari Athapaththu')
 info_df=info_df.rename(columns={'Player':'Player_name'})
-pdf[['noballs', 'wides','byes','legbyes','penalty']] = pdf[['noballs', 'wides','byes','legbyes','penalty']].fillna(0).astype(int)
+cols_conv=['season','match_id']
+pdfn[cols_conv] = pdfn[cols_conv].astype(str)
+bpdfn[cols_conv] = bpdfn[cols_conv].astype(str)
+pdfn=pdfn.drop(columns=['Unnamed: 0'])
+pdf=pdf.drop(columns=['penalty'])
+bpdfn=bpdfn.drop(columns=['Unnamed: 0'])
+bpdf=bpdf.drop(columns=['penalty'])
+idf=idf[(idf['final_year']=='2024/25')]
+pdfn = pdfn.drop_duplicates(subset=['match_id', 'ball','inning'], keep='first')
+bpdfn = bpdfn.drop_duplicates(subset=['match_id', 'ball','inning'], keep='first')
+idf=idf.drop(columns=['Unnamed: 0'])
+bidf=bidf.drop(columns=['Unnamed: 0'])
+if 'batting Style' in pdfn.columns and 'bowling Style' in pdfn.columns:
+    pdfn = pdfn.rename(columns={'batting Style': 'batting_style', 'bowling Style': 'bowling_style'})
+else:
+    print("Columns 'batting Style' and/or 'bowling Style' not found.")
+
+
+# Ensure that 'common_columns' match the order and columns in df2
+common_columns = [col for col in pdf.columns if col in pdf.columns]
+
+# Combine df2 columns in order and add any additional columns from df1 at the end
+all_columns = common_columns + [col for col in pdfn.columns if col not in common_columns]
+
+# Reorder df1 columns to match df2's order, with extra df1 columns appended at the end
+pdfn = pdfn[all_columns]
+
+# Concatenate df1 and df2 along the rows, ensuring column alignment
+merged_df = pd.concat([pdfn, pdf], ignore_index=True)
+pdf=merged_df
+pdfn['bowler'] = pdf['bowler'].replace('AC Jayangani', 'Chamari Athapaththu')
+pdf['batsman'] = pdf['batsman'].replace('AC Jayangani', 'Chamari Athapaththu')
+pdf['non_striker'] = pdf['non_striker'].replace('AC Jayangani', 'Chamari Athapaththu')
+bpdf=merged_df
+# Display the merged DataFrame
+print("Merged DataFrame:")
+print(merged_df.head())
+
+pdf[['noballs', 'wides','byes','legbyes']] = pdf[['noballs', 'wides','byes','legbyes']].fillna(0).astype(int)
 pdf['valid_ball'] = pdf.apply(lambda x: 1 if (x['wides'] == 0 and x['noballs'] == 0) else 0, axis=1)
+pdfn['valid_ball'] = pdfn.apply(lambda x: 1 if (x['wides'] == 0 and x['noballs'] == 0) else 0, axis=1)
 # Group by 'bowler' and 'match_id' to sum the 'bowler_wkt'
 dismissals_count = bpdf.groupby(['bowler', 'match_id'])['bowler_wkt'].sum()
 bbi = dismissals_count.groupby('bowler').max().reset_index().rename(columns={'bowler_wkt': 'bbi'})
 bidf = pd.merge(bidf, bbi, on='bowler')
 
 def show_match_details(match_id):
+    print("Hello")
+    match_id = str(match_id)
     # Filter match details for the selected match_id
     match_details = pdf[pdf['match_id'] == match_id]
+    print(match_details.head())
+    print("DHENDNHEHCBDHBEDHBD")
     # First, remove duplicates based on match_id and ball within the same match
     print(f"Before removing duplicates based on 'match_id' and 'ball': {match_details.shape}")
     match_details = match_details.drop_duplicates(subset=['match_id', 'ball', 'inning','batsman','bowler','over'], keep='first')
     print(f"After removing duplicates based on 'match_id' and 'ball': {match_details.shape}")
+    print("Hello")
     
     if not match_details.empty:
         st.write(f"### Match Details - Match ID: {match_id}")
@@ -186,9 +235,30 @@ def show_innings_scorecard(inning_data, title):
     batting_data['order'] = batting_data['Batsman'].apply(lambda x: batting_order.index(x) if x in batting_order else -1)
     batting_data = batting_data.sort_values(by='order').drop(columns='order').reset_index(drop=True)
     batting_data.index = batting_data.index + 1
+    batting_data['Last Name'] = batting_data['Batsman'].apply(lambda x: x.split()[-1])
+
+    # Step 2: Identify batsmen to remove based on the condition
+    to_remove = []
     
+    for idx, row in batting_data.iterrows():
+        if row['R'] == 0 and row['B'] == 0 and row['Wicket'] == '-':
+            # If last name appears again with non-zero R and B, mark for removal
+            last_name = row['Last Name']
+            if any((batting_data['Last Name'] == last_name) & ((batting_data['B'] == 0))):
+                to_remove.append(idx)
+    to_remove += batting_data[batting_data['Batsman'] == 'AC Jayangani'].index.tolist()
+    to_remove += batting_data[batting_data['Batsman'] == 'H Madavi'].index.tolist()
+    to_remove += batting_data[batting_data['Batsman'] == 'SIP Fernando'].index.tolist()
+    
+    # Step 3: Remove batsmen identified
+    batting_data_filtered = batting_data.drop(to_remove).reset_index(drop=True)
+    
+    # Step 4: Reset index and remove the 'Last Name' column
+    batting_data_filtered = batting_data_filtered.drop(columns='Last Name')
+    batting_data_filtered.index = batting_data_filtered.index + 1
+
     # Display the batting table
-    st.table(batting_data)
+    st.table(batting_data_filtered)
     
     # Show extras
     st.write(f"**Extras:** {total_extras}")
@@ -205,7 +275,7 @@ def show_innings_scorecard(inning_data, title):
         if bowler not in bowling_order:
             bowling_order.append(bowler)
     
-    inning_data['adjusted_runs'] = inning_data.apply(lambda row: row['total_runs'] - (row['byes'] + row['legbyes'] + row['penalty']), axis=1)
+    inning_data['adjusted_runs'] = inning_data.apply(lambda row: row['total_runs'] - (row['byes'] + row['legbyes']), axis=1)
     bowling_data = inning_data.groupby(['bowler']).agg({
         'valid_ball': 'sum',
         'adjusted_runs': 'sum',
@@ -716,7 +786,7 @@ pdf['bowling_style'] = pdf['bowling_style'].replace(bowling_style_mapping)
 # Sidebar for selecting between "Player Profile" and "Matchup Analysis"
 sidebar_option = st.sidebar.radio(
     "Select an option:",
-    ("Player Profile", "Matchup Analysis","Strength vs Weakness","Team Builder")
+    ("Player Profile", "Matchup Analysis","Strength vs Weakness","ICC WT20I 2024 Analysis")
 )
 
 if sidebar_option == "Player Profile":
@@ -1081,6 +1151,8 @@ if sidebar_option == "Player Profile":
             else:   
                     # Convert column names to uppercase and replace underscores with spaces
                     player_stats.columns = [col.upper().replace('_', ' ') for col in player_stats.columns]
+                    player_stats=player_stats.rename(columns={'BBI X':'BBI'})
+                    player_stats=player_stats.drop(columns=['BBI Y'])
                         
                         # Function to round float values if necessary (assuming round_up_floats exists)
                     player_stats = round_up_floats(player_stats)
@@ -1341,6 +1413,8 @@ if sidebar_option == "Player Profile":
                 # Handling clicks on MATCH ID links
                 for match_id in current_form_df['MATCH ID']:
                     if st.button(f'View Match {match_id}'):
+                        print("Fn called")
+                        print(match_id)
                         show_match_details(match_id)
             else:
                 st.write("No recent matches found for this player.")
@@ -1378,223 +1452,439 @@ elif sidebar_option == "Matchup Analysis":
             file_name=f"{batter_name}_vs_{bowler_name}_matchup.csv",
             mime="text/csv"  # Specify the MIME type for CSV
         )
-    else:
-        st.warning("No data available for the selected matchup.")
-    if grouping_option == "Year":
-        tdf = pdf[(pdf['batsman'] == batter_name) & (pdf['bowler'] == bowler_name)]
-
-        def standardize_season(season):
-            if '/' in season:  # Check if the season is in 'YYYY/YY' format
-                year = season.split('/')[0]  # Get the first part
-            else:
-                year = season  # Use as is if already in 'YYYY' format
-            return year.strip()  # Return the year stripped of whitespace
-
-        tdf['season'] = tdf['season'].apply(standardize_season)
-
-        # Populate an array of unique seasons
-        unique_seasons = tdf['season'].unique()
-        
-        # Optional: Convert to a sorted list (if needed)
-        unique_seasons = sorted(set(unique_seasons))
-
-        # Ensure tdf is a DataFrame
-        tdf = pd.DataFrame(tdf)
-        tdf['batsman_runs'] = tdf['batsman_runs'].astype(int)
-        tdf['total_runs'] = tdf['total_runs'].astype(int)
-
-        # Initialize an empty result DataFrame
-        result_df = pd.DataFrame()
-        i=0
-        # Run a for loop and pass temp_df to a cumulative function
-        for season in unique_seasons:
-            temp_df = tdf[tdf['season'] == season]
-            temp_df = cumulator(temp_df)
-
-            if i==0:
+        if grouping_option == "Year":
+            tdf = pdf[(pdf['batsman'] == batter_name) & (pdf['bowler'] == bowler_name)]
+    
+            def standardize_season(season):
+                if '/' in season:  # Check if the season is in 'YYYY/YY' format
+                    year = season.split('/')[0]  # Get the first part
+                else:
+                    year = season  # Use as is if already in 'YYYY' format
+                return year.strip()  # Return the year stripped of whitespace
+    
+            tdf['season'] = tdf['season'].apply(standardize_season)
+    
+            # Populate an array of unique seasons
+            unique_seasons = tdf['season'].unique()
+            
+            # Optional: Convert to a sorted list (if needed)
+            unique_seasons = sorted(set(unique_seasons))
+    
+            # Ensure tdf is a DataFrame
+            tdf = pd.DataFrame(tdf)
+            tdf['batsman_runs'] = tdf['batsman_runs'].astype(int)
+            tdf['total_runs'] = tdf['total_runs'].astype(int)
+    
+            # Initialize an empty result DataFrame
+            result_df = pd.DataFrame()
+            i=0
+            # Run a for loop and pass temp_df to a cumulative function
+            for season in unique_seasons:
+                temp_df = tdf[tdf['season'] == season]
+                temp_df = cumulator(temp_df)
+    
+                if i==0:
+                        result_df = temp_df  # Initialize with the first result_df
+                        i=1+i
+                else:
+                        result_df = pd.concat([result_df, temp_df], ignore_index=True)
+            # Drop unnecessary columns related to performance metrics
+            columns_to_drop = ['batsman', 'bowler', 'batting_team', 'debut_year', 'matches_x', 'matches_y', 'fifties', 'hundreds', 'thirties', 'highest_score','matches']
+            result_df = result_df.drop(columns=columns_to_drop, errors='ignore')
+    
+            # Convert specific columns to integers and fill NaN values
+            columns_to_convert = ['runs','dismissals']
+            for col in columns_to_convert:
+                result_df[col] = result_df[col].fillna(0).astype(int)
+    
+            result_df = result_df.rename(columns={'final_year': 'year'})
+            result_df.columns = [col.upper().replace('_', ' ') for col in result_df.columns]
+    
+            # Display the results
+            st.markdown("### **Yearwise Performance**")
+            cols = result_df.columns.tolist()
+    
+            # Specify the desired order with 'year' first
+            new_order = ['YEAR'] + [col for col in cols if col != 'YEAR']
+                      
+            # Reindex the DataFrame with the new column order
+            result_df = result_df[new_order]
+            st.table(result_df.style.set_table_attributes("style='font-weight: bold;'"))
+        elif grouping_option == "Match":
+            tdf = pdf[(pdf['batsman'] == batter_name) & (pdf['bowler'] == bowler_name)]
+    
+            # Populate an array of unique match IDs
+            unique_matches = sorted(set(tdf['match_id'].unique()))
+    
+            # Ensure tdf is a DataFrame
+            tdf = pd.DataFrame(tdf)
+            tdf['batsman_runs'] = tdf['batsman_runs'].astype(int)
+            tdf['total_runs'] = tdf['total_runs'].astype(int)
+    
+            # Initialize an empty result DataFrame
+            result_df = pd.DataFrame()
+            i = 0
+    
+            # Run a for loop and pass temp_df to a cumulative function
+            for match_id in unique_matches:
+                temp_df = tdf[tdf['match_id'] == match_id]
+                current_match_id = match_id
+                temp_df = cumulator(temp_df)
+                temp_df.insert(0, 'MATCH_ID', current_match_id)
+    
+                if i == 0:
                     result_df = temp_df  # Initialize with the first result_df
-                    i=1+i
-            else:
+                    i = 1 + i
+                else:
                     result_df = pd.concat([result_df, temp_df], ignore_index=True)
-        # Drop unnecessary columns related to performance metrics
-        columns_to_drop = ['batsman', 'bowler', 'batting_team', 'debut_year', 'matches_x', 'matches_y', 'fifties', 'hundreds', 'thirties', 'highest_score','matches']
-        result_df = result_df.drop(columns=columns_to_drop, errors='ignore')
+            columns_to_drop = ['batsman', 'bowler', 'batting_team', 'debut_year', 'matches_x', 'matches_y', 
+                               'fifties', 'hundreds', 'thirties', 'highest_score', 'season','matches']
+            result_df = result_df.drop(columns=columns_to_drop, errors='ignore')
+    
+            # Convert specific columns to integers and fill NaN values
+            columns_to_convert = ['runs', 'dismissals']
+            for col in columns_to_convert:
+                result_df[col] = result_df[col].fillna(0).astype(int)
+    
+            # Rename columns for better presentation
+            result_df = result_df.rename(columns={'match_id': 'MATCH ID'})
+            
+            
+            
+            result_df.columns = [col.upper().replace('_', ' ') for col in result_df.columns]
+            result_df['FINAL YEAR']=result_df['FINAL YEAR'].apply(standardize_season)
+            
+            result_df = result_df.rename(columns={'FINAL YEAR': 'YEAR'})  
+    
+            # Display the results
+            st.markdown("### **Matchwise Performance**")
+            cols = result_df.columns.tolist()
+    
+            # Reindex the DataFrame with the new column order
+            result_df=result_df.sort_values('YEAR',ascending=True)
+            result_df=result_df[['MATCH ID'] + ['YEAR'] + [col for col in result_df.columns if col not in ['MATCH ID','YEAR']]]
+            st.table(result_df.style.set_table_attributes("style='font-weight: bold;'"))
+            for match_id in result_df['MATCH ID']:
+                        if st.button(f'View Match {match_id}'):
+                            show_match_details(match_id)
+            
+                     
+        elif grouping_option == "Venue":
+            # Filter the DataFrame for the selected batsman and bowler
+            tdf = pdf[(pdf['batsman'] == batter_name) & (pdf['bowler'] == bowler_name)]
+        
+            # Ensure tdf is a DataFrame and populate unique venue values
+            tdf = pd.DataFrame(tdf)
+            tdf['batsman_runs'] = tdf['batsman_runs'].astype(int)
+            tdf['total_runs'] = tdf['total_runs'].astype(int)
+        
+            # Initialize an empty result DataFrame
+            result_df = pd.DataFrame()
+            i = 0
+        
+            # Populate an array of unique venues
+            unique_venues = tdf['venue'].unique()
+            
+            for venue in unique_venues:
+                # Filter temp_df for the current venue
+                temp_df = tdf[tdf['venue'] == venue]
+        
+                # Store the current venue in a variable
+                current_venue = venue
+        
+                # Call the cumulator function
+                temp_df = cumulator(temp_df)
+        
+                # Insert the current venue as the first column in temp_df
+                temp_df.insert(0, 'VENUE', current_venue)
+        
+                # Concatenate results
+                if i == 0:
+                    result_df = temp_df  # Initialize with the first result_df
+                    i += 1
+                else:
+                    result_df = pd.concat([result_df, temp_df], ignore_index=True)
+        
+            # Drop unnecessary columns related to performance metrics
+            columns_to_drop = ['batsman', 'bowler', 'batting_team', 'debut_year', 'matches_x', 'matches_y', 'fifties', 'hundreds', 'thirties', 'highest_score', 'matches']
+            result_df = result_df.drop(columns=columns_to_drop, errors='ignore')
+        
+            # Convert specific columns to integers and fill NaN values
+            columns_to_convert = ['runs', 'dismissals']
+            for col in columns_to_convert:
+                result_df[col] = result_df[col].fillna(0).astype(int)
+            result_df.columns = [col.upper().replace('_', ' ') for col in result_df.columns]
+            result_df['FINAL YEAR']=result_df['FINAL YEAR'].apply(standardize_season)
+            
+            result_df = result_df.rename(columns={'FINAL YEAR': 'YEAR'})   
+        
+            # Display the results
+            st.markdown("### **Venuewise Performance**")
+            cols = result_df.columns.tolist()
+        
+            # Specify the desired order with 'venue' first
+            new_order = ['VENUE'] + [col for col in cols if col != 'VENUE']
+            
+                          
+            # Reindex the DataFrame with the new column order
+            result_df = result_df[new_order]
+            result_df=result_df.sort_values('YEAR',ascending=True)
+            result_df=result_df[['VENUE'] + ['YEAR'] + [col for col in result_df.columns if col not in ['VENUE','YEAR']]]
+            st.table(result_df.style.set_table_attributes("style='font-weight: bold;'"))
+            
+        else:
+            # Assuming pdf is your main DataFrame
+            # Filter for innings 1 and 2 and prepare to accumulate results
+            innings = [1, 2]
+            result_df = pd.DataFrame()  # Initialize an empty DataFrame for results
+            
+            for inning in innings:
+                # Filter for the specific inning
+                tdf = pdf[(pdf['batsman'] == batter_name) & (pdf['bowler'] == bowler_name) & (pdf['inning'] == inning)]
+                
+                # Check if there's any data for the current inning
+                if not tdf.empty:
+                    # Call the cumulator function
+                    temp_df = cumulator(tdf)
+            
+                    # Add the inning as the first column in temp_df
+                    temp_df.insert(0, 'INNING', inning)
+            
+                    # Concatenate to the main result DataFrame
+                    result_df = pd.concat([result_df, temp_df], ignore_index=True)
+            
+            # After processing both innings, drop unnecessary columns if needed
+            columns_to_drop = ['batsman', 'bowler', 'batting_team', 'debut_year', 'matches_x', 'matches_y', 'fifties', 'hundreds', 'thirties', 'highest_score', 'matches','last_year']
+            result_df = result_df.drop(columns=columns_to_drop, errors='ignore')
+            
+            # Convert specific columns to integers and fill NaN values
+            columns_to_convert = ['runs', 'dismissals']
+            for col in columns_to_convert:
+                result_df[col] = result_df[col].fillna(0).astype(int)
+            
+            result_df.columns = [col.upper().replace('_', ' ') for col in result_df.columns]
+            
+            # Display the results
+            st.markdown("### **Innings Performance**")
+            result_df=result_df[['INNING'] + [col for col in result_df.columns if col not in ['INNING']]]
+            st.table(result_df.style.set_table_attributes("style='fsont-weight: bold;'"))
+    else:
+         st.warning("No data available for the selected matchup.")
+    # if grouping_option == "Year":
+    #     tdf = pdf[(pdf['batsman'] == batter_name) & (pdf['bowler'] == bowler_name)]
 
-        # Convert specific columns to integers and fill NaN values
-        columns_to_convert = ['runs','dismissals']
-        for col in columns_to_convert:
-            result_df[col] = result_df[col].fillna(0).astype(int)
+    #     def standardize_season(season):
+    #         if '/' in season:  # Check if the season is in 'YYYY/YY' format
+    #             year = season.split('/')[0]  # Get the first part
+    #         else:
+    #             year = season  # Use as is if already in 'YYYY' format
+    #         return year.strip()  # Return the year stripped of whitespace
 
-        result_df = result_df.rename(columns={'final_year': 'year'})
-        result_df.columns = [col.upper().replace('_', ' ') for col in result_df.columns]
+    #     tdf['season'] = tdf['season'].apply(standardize_season)
 
-        # Display the results
-        st.markdown("### **Yearwise Performance**")
-        cols = result_df.columns.tolist()
+    #     # Populate an array of unique seasons
+    #     unique_seasons = tdf['season'].unique()
+        
+    #     # Optional: Convert to a sorted list (if needed)
+    #     unique_seasons = sorted(set(unique_seasons))
 
-        # Specify the desired order with 'year' first
-        new_order = ['YEAR'] + [col for col in cols if col != 'YEAR']
+    #     # Ensure tdf is a DataFrame
+    #     tdf = pd.DataFrame(tdf)
+    #     tdf['batsman_runs'] = tdf['batsman_runs'].astype(int)
+    #     tdf['total_runs'] = tdf['total_runs'].astype(int)
+
+    #     # Initialize an empty result DataFrame
+    #     result_df = pd.DataFrame()
+    #     i=0
+    #     # Run a for loop and pass temp_df to a cumulative function
+    #     for season in unique_seasons:
+    #         temp_df = tdf[tdf['season'] == season]
+    #         temp_df = cumulator(temp_df)
+
+    #         if i==0:
+    #                 result_df = temp_df  # Initialize with the first result_df
+    #                 i=1+i
+    #         else:
+    #                 result_df = pd.concat([result_df, temp_df], ignore_index=True)
+    #     # Drop unnecessary columns related to performance metrics
+    #     columns_to_drop = ['batsman', 'bowler', 'batting_team', 'debut_year', 'matches_x', 'matches_y', 'fifties', 'hundreds', 'thirties', 'highest_score','matches']
+    #     result_df = result_df.drop(columns=columns_to_drop, errors='ignore')
+
+    #     # Convert specific columns to integers and fill NaN values
+    #     columns_to_convert = ['runs','dismissals']
+    #     for col in columns_to_convert:
+    #         result_df[col] = result_df[col].fillna(0).astype(int)
+
+    #     result_df = result_df.rename(columns={'final_year': 'year'})
+    #     result_df.columns = [col.upper().replace('_', ' ') for col in result_df.columns]
+
+    #     # Display the results
+    #     st.markdown("### **Yearwise Performance**")
+    #     cols = result_df.columns.tolist()
+
+    #     # Specify the desired order with 'year' first
+    #     new_order = ['YEAR'] + [col for col in cols if col != 'YEAR']
                   
-        # Reindex the DataFrame with the new column order
-        result_df = result_df[new_order]
-        st.table(result_df.style.set_table_attributes("style='font-weight: bold;'"))
-    elif grouping_option == "Match":
-        tdf = pdf[(pdf['batsman'] == batter_name) & (pdf['bowler'] == bowler_name)]
+    #     # Reindex the DataFrame with the new column order
+    #     result_df = result_df[new_order]
+    #     st.table(result_df.style.set_table_attributes("style='font-weight: bold;'"))
+    # elif grouping_option == "Match":
+    #     tdf = pdf[(pdf['batsman'] == batter_name) & (pdf['bowler'] == bowler_name)]
 
-        # Populate an array of unique match IDs
-        unique_matches = sorted(set(tdf['match_id'].unique()))
+    #     # Populate an array of unique match IDs
+    #     unique_matches = sorted(set(tdf['match_id'].unique()))
 
-        # Ensure tdf is a DataFrame
-        tdf = pd.DataFrame(tdf)
-        tdf['batsman_runs'] = tdf['batsman_runs'].astype(int)
-        tdf['total_runs'] = tdf['total_runs'].astype(int)
+    #     # Ensure tdf is a DataFrame
+    #     tdf = pd.DataFrame(tdf)
+    #     tdf['batsman_runs'] = tdf['batsman_runs'].astype(int)
+    #     tdf['total_runs'] = tdf['total_runs'].astype(int)
 
-        # Initialize an empty result DataFrame
-        result_df = pd.DataFrame()
-        i = 0
+    #     # Initialize an empty result DataFrame
+    #     result_df = pd.DataFrame()
+    #     i = 0
 
-        # Run a for loop and pass temp_df to a cumulative function
-        for match_id in unique_matches:
-            temp_df = tdf[tdf['match_id'] == match_id]
-            current_match_id = match_id
-            temp_df = cumulator(temp_df)
-            temp_df.insert(0, 'MATCH_ID', current_match_id)
+    #     # Run a for loop and pass temp_df to a cumulative function
+    #     for match_id in unique_matches:
+    #         temp_df = tdf[tdf['match_id'] == match_id]
+    #         current_match_id = match_id
+    #         temp_df = cumulator(temp_df)
+    #         temp_df.insert(0, 'MATCH_ID', current_match_id)
 
-            if i == 0:
-                result_df = temp_df  # Initialize with the first result_df
-                i = 1 + i
-            else:
-                result_df = pd.concat([result_df, temp_df], ignore_index=True)
-        columns_to_drop = ['batsman', 'bowler', 'batting_team', 'debut_year', 'matches_x', 'matches_y', 
-                           'fifties', 'hundreds', 'thirties', 'highest_score', 'season','matches']
-        result_df = result_df.drop(columns=columns_to_drop, errors='ignore')
+    #         if i == 0:
+    #             result_df = temp_df  # Initialize with the first result_df
+    #             i = 1 + i
+    #         else:
+    #             result_df = pd.concat([result_df, temp_df], ignore_index=True)
+    #     columns_to_drop = ['batsman', 'bowler', 'batting_team', 'debut_year', 'matches_x', 'matches_y', 
+    #                        'fifties', 'hundreds', 'thirties', 'highest_score', 'season','matches']
+    #     result_df = result_df.drop(columns=columns_to_drop, errors='ignore')
 
-        # Convert specific columns to integers and fill NaN values
-        columns_to_convert = ['runs', 'dismissals']
-        for col in columns_to_convert:
-            result_df[col] = result_df[col].fillna(0).astype(int)
+    #     # Convert specific columns to integers and fill NaN values
+    #     columns_to_convert = ['runs', 'dismissals']
+    #     for col in columns_to_convert:
+    #         result_df[col] = result_df[col].fillna(0).astype(int)
 
-        # Rename columns for better presentation
-        result_df = result_df.rename(columns={'match_id': 'MATCH ID'})
+    #     # Rename columns for better presentation
+    #     result_df = result_df.rename(columns={'match_id': 'MATCH ID'})
         
         
-        result_df.columns = [col.upper().replace('_', ' ') for col in result_df.columns]
-        result_df['FINAL YEAR']=result_df['FINAL YEAR'].apply(standardize_season)
+    #     result_df.columns = [col.upper().replace('_', ' ') for col in result_df.columns]
+    #     result_df['FINAL YEAR']=result_df['FINAL YEAR'].apply(standardize_season)
         
-        result_df = result_df.rename(columns={'FINAL YEAR': 'YEAR'})  
+    #     result_df = result_df.rename(columns={'FINAL YEAR': 'YEAR'})  
 
-        # Display the results
-        st.markdown("### **Matchwise Performance**")
-        cols = result_df.columns.tolist()
+    #     # Display the results
+    #     st.markdown("### **Matchwise Performance**")
+    #     cols = result_df.columns.tolist()
 
-        # Reindex the DataFrame with the new column order
-        result_df=result_df.sort_values('YEAR',ascending=True)
-        result_df=result_df[['MATCH ID'] + ['YEAR'] + [col for col in result_df.columns if col not in ['MATCH ID','YEAR']]]
-        st.table(result_df.style.set_table_attributes("style='font-weight: bold;'"))
-        for match_id in result_df['MATCH ID']:
-                    if st.button(f'View Match {match_id}'):
-                        show_match_details(match_id)
+    #     # Reindex the DataFrame with the new column order
+    #     result_df=result_df.sort_values('YEAR',ascending=True)
+    #     result_df=result_df[['MATCH ID'] + ['YEAR'] + [col for col in result_df.columns if col not in ['MATCH ID','YEAR']]]
+    #     st.table(result_df.style.set_table_attributes("style='font-weight: bold;'"))
+    #     for match_id in result_df['MATCH ID']:
+    #                 if st.button(f'View Match {match_id}'):
+    #                     show_match_details(match_id)
         
                  
-    elif grouping_option == "Venue":
-        # Filter the DataFrame for the selected batsman and bowler
-        tdf = pdf[(pdf['batsman'] == batter_name) & (pdf['bowler'] == bowler_name)]
+    # elif grouping_option == "Venue":
+    #     # Filter the DataFrame for the selected batsman and bowler
+    #     tdf = pdf[(pdf['batsman'] == batter_name) & (pdf['bowler'] == bowler_name)]
     
-        # Ensure tdf is a DataFrame and populate unique venue values
-        tdf = pd.DataFrame(tdf)
-        tdf['batsman_runs'] = tdf['batsman_runs'].astype(int)
-        tdf['total_runs'] = tdf['total_runs'].astype(int)
+    #     # Ensure tdf is a DataFrame and populate unique venue values
+    #     tdf = pd.DataFrame(tdf)
+    #     tdf['batsman_runs'] = tdf['batsman_runs'].astype(int)
+    #     tdf['total_runs'] = tdf['total_runs'].astype(int)
     
-        # Initialize an empty result DataFrame
-        result_df = pd.DataFrame()
-        i = 0
+    #     # Initialize an empty result DataFrame
+    #     result_df = pd.DataFrame()
+    #     i = 0
     
-        # Populate an array of unique venues
-        unique_venues = tdf['venue'].unique()
+    #     # Populate an array of unique venues
+    #     unique_venues = tdf['venue'].unique()
         
-        for venue in unique_venues:
-            # Filter temp_df for the current venue
-            temp_df = tdf[tdf['venue'] == venue]
+    #     for venue in unique_venues:
+    #         # Filter temp_df for the current venue
+    #         temp_df = tdf[tdf['venue'] == venue]
     
-            # Store the current venue in a variable
-            current_venue = venue
+    #         # Store the current venue in a variable
+    #         current_venue = venue
     
-            # Call the cumulator function
-            temp_df = cumulator(temp_df)
+    #         # Call the cumulator function
+    #         temp_df = cumulator(temp_df)
     
-            # Insert the current venue as the first column in temp_df
-            temp_df.insert(0, 'VENUE', current_venue)
+    #         # Insert the current venue as the first column in temp_df
+    #         temp_df.insert(0, 'VENUE', current_venue)
     
-            # Concatenate results
-            if i == 0:
-                result_df = temp_df  # Initialize with the first result_df
-                i += 1
-            else:
-                result_df = pd.concat([result_df, temp_df], ignore_index=True)
+    #         # Concatenate results
+    #         if i == 0:
+    #             result_df = temp_df  # Initialize with the first result_df
+    #             i += 1
+    #         else:
+    #             result_df = pd.concat([result_df, temp_df], ignore_index=True)
     
-        # Drop unnecessary columns related to performance metrics
-        columns_to_drop = ['batsman', 'bowler', 'batting_team', 'debut_year', 'matches_x', 'matches_y', 'fifties', 'hundreds', 'thirties', 'highest_score', 'matches']
-        result_df = result_df.drop(columns=columns_to_drop, errors='ignore')
+    #     # Drop unnecessary columns related to performance metrics
+    #     columns_to_drop = ['batsman', 'bowler', 'batting_team', 'debut_year', 'matches_x', 'matches_y', 'fifties', 'hundreds', 'thirties', 'highest_score', 'matches']
+    #     result_df = result_df.drop(columns=columns_to_drop, errors='ignore')
     
-        # Convert specific columns to integers and fill NaN values
-        columns_to_convert = ['runs', 'dismissals']
-        for col in columns_to_convert:
-            result_df[col] = result_df[col].fillna(0).astype(int)
-        result_df.columns = [col.upper().replace('_', ' ') for col in result_df.columns]
-        result_df['FINAL YEAR']=result_df['FINAL YEAR'].apply(standardize_season)
+    #     # Convert specific columns to integers and fill NaN values
+    #     columns_to_convert = ['runs', 'dismissals']
+    #     for col in columns_to_convert:
+    #         result_df[col] = result_df[col].fillna(0).astype(int)
+    #     result_df.columns = [col.upper().replace('_', ' ') for col in result_df.columns]
+    #     result_df['FINAL YEAR']=result_df['FINAL YEAR'].apply(standardize_season)
         
-        result_df = result_df.rename(columns={'FINAL YEAR': 'YEAR'})   
+    #     result_df = result_df.rename(columns={'FINAL YEAR': 'YEAR'})   
     
-        # Display the results
-        st.markdown("### **Venuewise Performance**")
-        cols = result_df.columns.tolist()
+    #     # Display the results
+    #     st.markdown("### **Venuewise Performance**")
+    #     cols = result_df.columns.tolist()
     
-        # Specify the desired order with 'venue' first
-        new_order = ['VENUE'] + [col for col in cols if col != 'VENUE']
+    #     # Specify the desired order with 'venue' first
+    #     new_order = ['VENUE'] + [col for col in cols if col != 'VENUE']
         
                       
-        # Reindex the DataFrame with the new column order
-        result_df = result_df[new_order]
-        result_df=result_df.sort_values('YEAR',ascending=True)
-        result_df=result_df[['VENUE'] + ['YEAR'] + [col for col in result_df.columns if col not in ['VENUE','YEAR']]]
-        st.table(result_df.style.set_table_attributes("style='font-weight: bold;'"))
+    #     # Reindex the DataFrame with the new column order
+    #     result_df = result_df[new_order]
+    #     result_df=result_df.sort_values('YEAR',ascending=True)
+    #     result_df=result_df[['VENUE'] + ['YEAR'] + [col for col in result_df.columns if col not in ['VENUE','YEAR']]]
+    #     st.table(result_df.style.set_table_attributes("style='font-weight: bold;'"))
         
-    else:
-        # Assuming pdf is your main DataFrame
-        # Filter for innings 1 and 2 and prepare to accumulate results
-        innings = [1, 2]
-        result_df = pd.DataFrame()  # Initialize an empty DataFrame for results
+    # else:
+    #     # Assuming pdf is your main DataFrame
+    #     # Filter for innings 1 and 2 and prepare to accumulate results
+    #     innings = [1, 2]
+    #     result_df = pd.DataFrame()  # Initialize an empty DataFrame for results
         
-        for inning in innings:
-            # Filter for the specific inning
-            tdf = pdf[(pdf['batsman'] == batter_name) & (pdf['bowler'] == bowler_name) & (pdf['inning'] == inning)]
+    #     for inning in innings:
+    #         # Filter for the specific inning
+    #         tdf = pdf[(pdf['batsman'] == batter_name) & (pdf['bowler'] == bowler_name) & (pdf['inning'] == inning)]
             
-            # Check if there's any data for the current inning
-            if not tdf.empty:
-                # Call the cumulator function
-                temp_df = cumulator(tdf)
+    #         # Check if there's any data for the current inning
+    #         if not tdf.empty:
+    #             # Call the cumulator function
+    #             temp_df = cumulator(tdf)
         
-                # Add the inning as the first column in temp_df
-                temp_df.insert(0, 'INNING', inning)
+    #             # Add the inning as the first column in temp_df
+    #             temp_df.insert(0, 'INNING', inning)
         
-                # Concatenate to the main result DataFrame
-                result_df = pd.concat([result_df, temp_df], ignore_index=True)
+    #             # Concatenate to the main result DataFrame
+    #             result_df = pd.concat([result_df, temp_df], ignore_index=True)
         
-        # After processing both innings, drop unnecessary columns if needed
-        columns_to_drop = ['batsman', 'bowler', 'batting_team', 'debut_year', 'matches_x', 'matches_y', 'fifties', 'hundreds', 'thirties', 'highest_score', 'matches','last_year']
-        result_df = result_df.drop(columns=columns_to_drop, errors='ignore')
+    #     # After processing both innings, drop unnecessary columns if needed
+    #     columns_to_drop = ['batsman', 'bowler', 'batting_team', 'debut_year', 'matches_x', 'matches_y', 'fifties', 'hundreds', 'thirties', 'highest_score', 'matches','last_year']
+    #     result_df = result_df.drop(columns=columns_to_drop, errors='ignore')
         
-        # Convert specific columns to integers and fill NaN values
-        columns_to_convert = ['runs', 'dismissals']
-        for col in columns_to_convert:
-            result_df[col] = result_df[col].fillna(0).astype(int)
+    #     # Convert specific columns to integers and fill NaN values
+    #     columns_to_convert = ['runs', 'dismissals']
+    #     for col in columns_to_convert:
+    #         result_df[col] = result_df[col].fillna(0).astype(int)
         
-        result_df.columns = [col.upper().replace('_', ' ') for col in result_df.columns]
+    #     result_df.columns = [col.upper().replace('_', ' ') for col in result_df.columns]
         
-        # Display the results
-        st.markdown("### **Innings Performance**")
-        result_df=result_df[['INNING'] + [col for col in result_df.columns if col not in ['INNING']]]
-        st.table(result_df.style.set_table_attributes("style='fsont-weight: bold;'"))
+    #     # Display the results
+    #     st.markdown("### **Innings Performance**")
+    #     result_df=result_df[['INNING'] + [col for col in result_df.columns if col not in ['INNING']]]
+    #     st.table(result_df.style.set_table_attributes("style='fsont-weight: bold;'"))
       
 elif sidebar_option == "Strength vs Weakness":
     st.header("Strength and Weakness Analysis")
@@ -2490,5 +2780,931 @@ elif sidebar_option == "Strength vs Weakness":
             st.pyplot(plt)
 
 else :
-    st.header("Team Builder")   
-    st.pyplot(plt)
+    st.header("ICC WT20I 2024")
+    df=pdfn
+    df['wagonZone'] = df['wagonZone'].str.extract('(\d+)')
+    
+    # Replace NaN with -1 and convert the column to integers
+    df['wagonZone'] = df['wagonZone'].fillna(-1).astype(int)
+    temp_df=df
+    
+    st.sidebar.title("Match by Match Analysis")
+    # Main section - Career Stat Type selection
+    option = st.selectbox("Select Analysis Dimension", ("Batsman Analysis", "Bowler Analysis"))
+    batsman_selected = st.selectbox("Select Batsman", options=temp_df["batsman"].unique())
+    if option == 'Batsman Analysis':
+
+        # Filter the data for the selected batsman
+        final_df = temp_df[temp_df["batsman"] == batsman_selected]
+        fdf=final_df
+        # Calculate statistics
+        total_runs = final_df["batsman_runs"].sum()
+        total_balls = final_df['valid_ball'].sum()
+        total_dismissals = final_df["is_wkt"].sum()
+        strike_rate = (total_runs / total_balls) * 100 if total_balls > 0 else 0
+        avg_runs = total_runs / total_dismissals if total_dismissals > 0 else inf
+    
+        # Count for each scoring shot type
+        total_zeros = final_df["is_dot"].sum()
+        total_ones = final_df["is_one"].sum()
+        total_twos = final_df["is_two"].sum()
+        total_threes = final_df["is_three"].sum()
+        total_fours = final_df["is_four"].sum()
+        total_sixes = final_df["is_six"].sum()
+    
+        # Calculate percentages
+        total_balls_for_percentage = total_zeros + total_ones + total_twos + total_threes + total_fours + total_sixes
+        
+        def calc_percentage(value, total):
+            return f"{(value / total * 100):.1f}%" if total > 0 else "0%"
+        percent_zeros = (total_zeros / total_balls) * 100 if total_balls > 0 else 0
+        percent_ones = (total_ones / total_balls) * 100 if total_balls > 0 else 0
+        percent_twos = (total_twos / total_balls) * 100 if total_balls > 0 else 0
+        percent_threes = (total_threes / total_balls) * 100 if total_balls > 0 else 0
+        percent_fours = (total_fours / total_balls) * 100 if total_balls > 0 else 0
+        percent_sixes = (total_sixes / total_balls) * 100 if total_balls > 0 else 0
+        final_df = final_df[final_df['shot_type'].apply(lambda x: isinstance(x, str))]
+
+        boundary_counts = {}
+
+        # Loop through each row to count 4s and 6s for each shot type
+        for _, row in final_df.iterrows():
+            shot_type = row['shot_type']
+            batsman_runs = row['batsman_runs']
+            
+            # Only consider valid shot types (non-null, string) and boundary runs (4s and 6s)
+            if isinstance(shot_type, str) and batsman_runs in [4, 6]:
+                # Increment the count for the shot type in boundary_counts
+                if shot_type in boundary_counts:
+                    boundary_counts[shot_type] += 1
+                else:
+                    boundary_counts[shot_type] = 1
+        if "DEFENDED" in boundary_counts:
+            del boundary_counts["DEFENDED"]
+
+        # Find the shot type with the highest boundary count
+        if boundary_counts:
+            max_shot = max(boundary_counts, key=boundary_counts.get)  # Shot type with the most 4s and 6s
+        else:
+            max_shot = "N/A"  # Fallback if no boundary data
+
+        with st.container():
+            st.markdown(
+                f"""
+                <style>
+                    .stats-box {{
+                        background-color: #f0f0f0;
+                        padding: 15px;
+                        border-radius: 10px;
+                        font-family: Arial, sans-serif;
+                        color: #333;
+                    }}
+                    .stats-title {{
+                        font-size: 20px;
+                        font-weight: bold;
+                        margin-bottom: 10px;
+                    }}
+                    .stats-details {{
+                        font-size: 16px;
+                        font-weight: bold;
+                    }}
+                    .compact-line {{
+                        font-size: 14px;
+                    }}
+                    .bold {{
+                        font-weight: bold;
+                    }}
+                    .highlight {{
+                        color: #d9534f;
+                        font-weight: bold;
+                        font-size: 16px;
+                        margin-top: 10px;
+                    }}
+                </style>
+                """, unsafe_allow_html=True)
+        
+            # Define the main stats container
+            stats_content = f"""
+                <div class="stats-box">
+                    <div class="stats-title">{batsman_selected}</div>
+                    <div class="stats-details">Runs: {int(total_runs)}</div>
+                    <div class="stats-details">Balls: {int(total_balls)}</div>
+                    <div class="stats-details">Dismissals: {int(total_dismissals)} 🟥</div>
+                    <div class="stats-details">S/R: {strike_rate:.1f}</div>
+                    <div class="stats-details">Avg: {avg_runs:.1f}</div>
+                    <div class="compact-line">
+                        <span class="bold">0s:</span> <span class="white-square"></span> ({percent_zeros:.1f}%) | 
+                        <span class="bold">1s:</span> {int(total_ones)} 🟩 ({percent_ones:.1f}%) | 
+                        <span class="bold">2s:</span> {int(total_twos)} 🟦 ({percent_twos:.1f}%) | 
+                        <span class="bold">3s:</span> {int(total_threes)} 🟪 ({percent_threes:.1f}%) | 
+                        <span class="bold">4s:</span> {int(total_fours)} 🟨 ({percent_fours:.1f}%) | 
+                        <span class="bold">6s:</span> {int(total_sixes)} 🟫 ({percent_sixes:.1f}%)
+                    </div>
+            """
+            # Render the stats content
+            st.markdown(stats_content, unsafe_allow_html=True)
+
+        
+        def get_sector_angle(zone, batting_style, offset=0):
+            base_angles = {
+                1: 45,   # Third Man
+                2: 90,   # Point
+                3: 135,  # Covers
+                4: 180,  # Mid-off
+                5: 225,  # Mid-on
+                6: 270,  # Mid-wicket
+                7: 315,  # Square leg
+                8: 360   # Fine leg
+            }
+            angle = base_angles[zone] + offset
+            # if batting_style == 'LHB':
+            #     angle = (180 + angle) % 360
+            return np.radians(angle)
+    
+        def get_line_properties(runs):
+            properties = {
+                1: {'color': 'darkgreen', 'length': 0.5, 'width': 3,'alpha':1},    
+                2: {'color': 'darkblue', 'length': 0.65, 'width': 3.5},    
+                3: {'color': 'darkviolet', 'length': 0.8, 'width': 3.8},   
+                4: {'color': 'goldenrod', 'length': 1.0, 'width': 4.5},     
+                6: {'color': 'maroon', 'length': 1.1, 'width': 5}     
+            }
+            return properties.get(runs, None)
+    
+        def draw_cricket_field_with_wagon_wheel(final_df):
+            fig, ax = plt.subplots(figsize=(12, 12))
+            ax.set_aspect('equal')
+            ax.axis('off')
+            
+            # Draw base field elements with lighter outer green
+            # boundary = plt.Circle((0, 0), 1, fill=True, color='#228B22', alpha=0.7) 
+            boundary = plt.Circle((0, 0), 1, fill=True, color='#228B22', alpha=0.5)# Lighter green
+            boundary_line = plt.Circle((0, 0), 1, fill=False, color='black', linewidth=4)
+            boundary_glow = plt.Circle((0, 0), 1, fill=False, color='black', linewidth=4, alpha=1)
+            inner_circle = plt.Circle((0, 0), 0.5, fill=True, color='#90EE90')
+            inner_circle_line = plt.Circle((0, 0), 0.5, fill=False, color='white', linewidth=1)
+            
+            # Add title
+            plt.title('WAGON WHEEL', pad=2, color='white', size=8, fontweight='bold')
+            
+            # Draw sector lines
+            angles = np.linspace(0, 2*np.pi, 9)[:-1]
+            for angle in angles:
+                x = np.cos(angle)
+                y = np.sin(angle)
+                ax.plot([0, x], [0, y], color='white', alpha=0.2, linewidth=1)
+            
+            # Draw pitch rectangle
+            pitch_width = 0.08
+            pitch_length = 0.16
+            pitch_rect = plt.Rectangle((-pitch_width/2, -pitch_length/2), 
+                                    pitch_width, pitch_length, 
+                                    color='tan', alpha=1)
+            
+            # Add base elements to plot
+            ax.add_patch(boundary)
+            ax.add_patch(boundary_glow)
+            ax.add_patch(boundary_line)
+            ax.add_patch(inner_circle)
+            ax.add_patch(inner_circle_line)
+            ax.add_patch(pitch_rect)
+            
+            # Group shots by zone to handle overlapping
+            for zone in range(1, 9):
+                zone_shots = final_df[final_df['wagonZone'] == zone]
+                zone_shots = zone_shots.sort_values('batsman_runs', ascending=False)
+                
+                num_shots = len(zone_shots)
+                if num_shots > 1:
+                    offsets = np.linspace(-15, 15, num_shots)
+                else:
+                    offsets = [0]
+                
+                for (_, shot), offset in zip(zone_shots.iterrows(), offsets):
+                    angle = get_sector_angle(shot['wagonZone'], shot['batting_style'], offset)
+                    props = get_line_properties(shot['batsman_runs'])
+                    if props:
+                        x = props['length'] * np.cos(angle)
+                        y = props['length'] * np.sin(angle)
+                        ax.plot([0, x], [0, y], 
+                                color=props['color'], 
+                                linewidth=props['width'], 
+                                alpha=0.9,  # Increased line opacity
+                                solid_capstyle='round')
+                    # x = props['length'] * np.cos(angle)
+                    # y = props['length'] * np.sin(angle)
+                    
+                    # ax.plot([0, x], [0, y], 
+                    # color=props['color'], 
+                    # linewidth=props['width'], 
+                    # alpha=0.9,  # Increased line opacity
+                    # solid_capstyle='round')
+            
+            ax.set_xlim(-1.2, 1.2)
+            ax.set_ylim(-1.2, 1.2)
+            plt.tight_layout(pad=0)
+            return fig
+        left_col, right_col = st.columns([2.8, 4])        
+        with left_col:
+            st.markdown("## WAGON WHEEL")
+            fig = draw_cricket_field_with_wagon_wheel(final_df)
+            st.pyplot(fig, use_container_width=True)
+        
+        with right_col:
+            st.markdown("## PITCH MAP")
+            import streamlit as st
+            import plotly.graph_objects as go
+            import pandas as pd
+            import numpy as np
+            
+            # Define pitch zones with boundaries
+            zones = {
+                'Short': (8, 10),
+                'Back of Length': (6, 8),
+                'Good': (4, 6),
+                'Full': (2, 4),
+                'Yorker': (0, 2),
+                'Full Toss': (-2, 0)
+            }
+            
+            # Define adjusted line positions with compact spacing
+            line_positions = {
+                'Wide Outside Off Stump': -0.3,
+                'Outside Off Stump': -0.15,
+                'On Stumps': 0,
+                'Outside Leg Stump': 0.15,
+                'Wide Outside Leg Stump': 0.3
+            }
+            
+            length_positions = {
+                'Short': 9,
+                'Back of Length': 7,
+                'Good Length': 5,
+                'Full': 3,
+                'Yorker': 1,
+                'Full Toss': -1
+            }
+            
+            # Function to apply a small random offset to length while keeping line accurate
+            def apply_length_offset(y_value, offset_range=(-0.95, 0.95), boundary=(-2, 10)):
+                offset = np.random.uniform(offset_range[0], offset_range[1])
+                if boundary[0] <= y_value + offset <= boundary[1]:
+                    return y_value + offset
+                return y_value
+            
+            def apply_line_offset(x_value, offset_range=(-0.05, 0.05), boundary=(-0.5,0.5)):
+                offset = np.random.uniform(offset_range[0], offset_range[1])
+                if boundary[0] <= x_value + offset <= boundary[1]:
+                    return x_value + offset
+                return x_value
+            
+            # Set up the 3D plot
+            fig = go.Figure()
+            
+            # Define stumps and bails
+            stump_positions = [-0.05, 0, 0.05]
+            stump_height = 0.3
+            stump_thickness = 2
+            bail_height = stump_height + 0.002
+            
+            # Add stumps
+            for x_pos in stump_positions:
+                fig.add_trace(go.Scatter3d(
+                    x=[x_pos, x_pos],
+                    y=[0, 0],
+                    z=[0, stump_height],
+                    mode='lines',
+                    line=dict(color='black', width=stump_thickness),
+                    showlegend=False
+                ))
+            
+            # Add bails
+            fig.add_trace(go.Scatter3d(
+                x=[stump_positions[0], stump_positions[1]],
+                y=[0, 0],
+                z=[bail_height, bail_height],
+                mode='lines',
+                line=dict(color='black', width=2),
+                showlegend=False
+            ))
+            fig.add_trace(go.Scatter3d(
+                x=[stump_positions[1], stump_positions[2]],
+                y=[0, 0],
+                z=[bail_height, bail_height],
+                mode='lines',
+                line=dict(color='black', width=2),
+                showlegend=False
+            ))
+            
+            # Add pitch zones
+            for zone_name, (y_min, y_max) in zones.items():
+                fig.add_trace(go.Scatter3d(
+                    x=[-0.5, 0.5, 0.5, -0.5, -0.5],
+                    y=[y_min, y_min, y_max, y_max, y_min],
+                    z=[0, 0, 0, 0, 0],
+                    mode='lines+markers',
+                    line=dict(color="gray", width=2),
+                    marker=dict(size=0.1, opacity=0.2),
+                    showlegend=False
+                ))
+            
+            # Add length labels on the side of the pitch
+            for length, y_position in length_positions.items():
+                fig.add_trace(go.Scatter3d(
+                    x=[0.6],  # Adjust X position to be to the side of the pitch
+                    y=[y_position],
+                    z=[0],
+                    mode='text',
+                    text=[length],
+                    textposition="middle right",
+                    textfont=dict(size=10, color="black"),
+                    showlegend=False
+                ))
+            
+            # Sample batting style (replace with data from `final_df`)
+            batting_style = final_df['batting_style'].iloc[0] if 'batting_style' in final_df else 'Right-hand bat'
+            st.write(f"Batting Style: {batting_style}")
+            
+            # Set a mirroring factor based on batting style
+            mirror_factor = -1 if batting_style == 'Left-hand bat' else 1
+            
+            # Separate the data into wicket and non-wicket balls
+            wicket_data = final_df[final_df['is_wkt'] == 1]
+            non_wicket_data = final_df[final_df['is_wkt'] == 0]
+        
+            # Plot wicket balls first
+            for index, row in wicket_data.iterrows():
+                # Determine base X and Y positions from line and length
+                x_base = line_positions.get(row['line'], 0) * mirror_factor
+                y_base = length_positions.get(row['length'], 5)
+        
+                # Apply offset to length (y) while keeping line (x) accurate
+                x_pos = apply_line_offset(x_base, boundary=(-0.5, 0.5))
+                y_pos = apply_length_offset(y_base, boundary=(-2, 10))
+                z_pos = 0
+        
+                # Set color and size for wickets
+                color = 'red'
+                size = 5
+                opacity = 1  # Set opacity to a single value
+        
+                # Plot the wicket ball
+                fig.add_trace(go.Scatter3d(
+                    x=[x_pos],
+                    y=[y_pos],
+                    z=[z_pos],
+                    mode='markers',
+                    marker=dict(size=size, color=color, opacity=opacity),
+                    hoverinfo="text",
+                    text=f"Runs: {row['batsman_runs']} - Wicket"
+                ))
+        
+            # Plot non-wicket balls next
+            for index, row in non_wicket_data.iterrows():
+                # Determine base X and Y positions from line and length
+                x_base = line_positions.get(row['line'], 0) * mirror_factor
+                y_base = length_positions.get(row['length'], 5)
+        
+                # Apply offset to length (y) while keeping line (x) accurate
+                x_pos = apply_line_offset(x_base, boundary=(-0.5, 0.5))
+                y_pos = apply_length_offset(y_base, boundary=(-2, 10))
+                z_pos = 0
+        
+                # Set color based on runs
+                batsman_runs = row['batsman_runs']
+                color = {
+                    1: 'green',
+                    2: 'blue',
+                    3: 'violet',
+                    4: 'yellow',
+                    6: 'orange'
+                }.get(batsman_runs, 'gray')
+                size = 5
+                opacity = 1  # Set opacity to a single value for non-wicket balls
+        
+                # Plot the non-wicket ball
+                fig.add_trace(go.Scatter3d(
+                    x=[x_pos],
+                    y=[y_pos],
+                    z=[z_pos],
+                    mode='markers',
+                    marker=dict(size=size, color=color, opacity=opacity),
+                    hoverinfo="text",
+                    text=f"Runs: {row['batsman_runs']} - {'Run'}"
+                ))
+        
+            # Twinkle effect for wickets (already added in the wicket balls loop)
+        
+            fig.update_layout(
+                scene=dict(
+                    xaxis=dict(title='X-axis', range=[-1, 1]),
+                    yaxis=dict(title='Y-axis', range=[-2, 10]),
+                    zaxis=dict(title='Z-axis (Height)', range=[0, 2]),
+                ),
+                width=1000,
+                height=800,
+                showlegend=False
+            )
+            st.plotly_chart(fig)
+        
+        import numpy as np
+        import plotly.graph_objects as go
+        import streamlit as st
+        
+        # Assuming final_df already exists in your environment with 'line', 'length', 'batsman_runs', and 'is_wkt' columns
+        
+        # Set up line and length mapping
+        line_positions = {
+            'Wide Outside Off Stump': 0,
+            'Outside Off Stump': 1,
+            'On Stumps': 2,
+            'Outside Leg Stump': 3,
+            'Wide Outside Leg Stump': 4
+        }
+        
+        length_positions = {
+            'Short': 0,
+            'Back of Length': 1,
+            'Good Length': 2,
+            'Full': 3,
+            'Yorker': 4
+        }
+        
+        # Initialize 5x5 grids for ball frequency, run accumulation, and wicket counts
+        run_count_grid = np.zeros((5, 5))
+        wicket_count_grid = np.zeros((5, 5))
+        
+        # Fill the grids based on final_df data
+        for _, row in final_df.iterrows():
+            line = row['line']
+            length = row['length']
+            runs = row['batsman_runs']
+            is_wkt = row['is_wkt']
+            
+            # Identify the correct cell for run count and wicket count
+            line_idx = line_positions.get(line, 2)  # Default to 'On Stumps' if line not found
+            length_idx = length_positions.get(length, 2)  # Default to 'Good Length' if length not found
+            
+            # Update run counts and wicket counts
+            run_count_grid[length_idx, line_idx] += runs
+            
+            if is_wkt == 1:
+                wicket_count_grid[length_idx, line_idx] += 1
+        
+        # Labels for line and length positions
+        line_labels = ['Wide Outside Off', 'Outside Off', 'On Stumps', 'Outside Leg', 'Wide Outside Leg']
+        length_labels = ['Short', 'Back of Length', 'Good Length', 'Full', 'Yorker']
+        
+        # Function to create heatmap figure for a 5x5 grid
+        def create_heatmap(grid, title, annotations):
+            fig = go.Figure(
+                data=go.Heatmap(
+                    z=grid,
+                    colorscale='Reds',
+                    colorbar=dict(title=title)
+                )
+            )
+            # Add black text annotations to show actual counts
+            for i in range(5):
+                for j in range(5):
+                    fig.add_annotation(
+                        x=j, y=i,
+                        text=f'{annotations[i, j]}',
+                        showarrow=False,
+                        font=dict(color="black", size=12)
+                    )
+            
+            # Update layout for vertical orientation and labels
+            fig.update_layout(
+                xaxis=dict(showgrid=False, tickvals=list(range(5)), ticktext=line_labels, title="Line"),
+                yaxis=dict(showgrid=False, tickvals=list(range(5)), ticktext=length_labels, title="Length"),
+                height=700, width=300  # Adjusted size for compact display
+            )
+            return fig
+        
+        # Organize layouts in two columns to make them appear side-by-side
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.write("### Wicket Count")
+            # Display the wicket count grid
+            st.plotly_chart(create_heatmap(wicket_count_grid, "Wickets", wicket_count_grid), use_container_width=True)
+        
+        with col2:
+            st.write("### Runs Scored")
+            # Display the runs count grid
+            st.plotly_chart(create_heatmap(run_count_grid, "Runs", run_count_grid), use_container_width=True)
+
+    else:
+        # Filter data for the selected bowler
+        bowler_selected = batsman_selected
+        final_df = temp_df[temp_df["bowler"] == bowler_selected]
+        if not final_df.empty:
+            # Calculate bowler's metrics
+            total_runs_conceded = final_df["total_runs"].sum()
+            total_balls_bowled = final_df["valid_ball"].sum()  # Only valid balls count towards economy
+            total_wickets = final_df["bowler_wkt"].sum()
+            economy_rate = (total_runs_conceded / (total_balls_bowled / 6)) if total_balls_bowled > 0 else 0
+            bowling_sr = (total_balls_bowled / total_wickets) if total_wickets > 0 else float('inf')
+            
+            # Count dot balls for dot percentage
+            total_dots = final_df["is_dot"].sum()
+            dot_percentage = (total_dots / total_balls_bowled) * 100 if total_balls_bowled > 0 else 0
+            
+            # Count each scoring shot type
+            total_ones = final_df["is_one"].sum()
+            total_twos = final_df["is_two"].sum()
+            total_threes = final_df["is_three"].sum()
+            total_fours = final_df["is_four"].sum()
+            total_sixes = final_df["is_six"].sum()
+            
+            # Calculate percentages for each shot type
+            def calc_percentage(value, total):
+                return f"{(value / total * 100):.1f}%" if total > 0 else "0%"
+            
+            percent_ones = calc_percentage(total_ones, total_balls_bowled)
+            percent_twos = calc_percentage(total_twos, total_balls_bowled)
+            percent_threes = calc_percentage(total_threes, total_balls_bowled)
+            percent_fours = calc_percentage(total_fours, total_balls_bowled)
+            percent_sixes = calc_percentage(total_sixes, total_balls_bowled)
+            
+            # Display the statistics in a styled container
+            with st.container():
+                # Style the display
+                st.markdown(
+                    f"""
+                    <style>
+                        .stats-box {{
+                            background-color: #f0f0f0;
+                            padding: 15px;
+                            border-radius: 10px;
+                            font-family: Arial, sans-serif;
+                            color: #333;
+                        }}
+                        .stats-title {{
+                            font-size: 20px;
+                            font-weight: bold;
+                            margin-bottom: 10px;
+                        }}
+                        .stats-details {{
+                            font-size: 16px;
+                            font-weight: bold;
+                        }}
+                        .compact-line {{
+                            font-size: 14px;
+                        }}
+                        .bold {{
+                            font-weight: bold;
+                        }}
+                    </style>
+                    """, unsafe_allow_html=True)
+                
+                st.markdown(f"""
+                    <div class="stats-box">
+                        <div class="stats-title">{bowler_selected}</div>
+                        <div class="stats-details">
+                            Runs Conceded: {int(total_runs_conceded)}  
+                        </div>
+                        <div class="stats-details">
+                            Balls Bowled: {int(total_balls_bowled)}  
+                        </div>
+                        <div class="stats-details">
+                            Wickets: {int(total_wickets)} 🎯
+                        </div>
+                        <div class="stats-details">
+                            Economy Rate: {economy_rate:.2f}  
+                        </div>
+                        <div class="stats-details">
+                            Bowling S/R: {bowling_sr:.1f}
+                        </div>
+                        <div class="stats-details">
+                            Dot %: {dot_percentage:.1f}%
+                        </div>
+                        <div class="compact-line">
+                            <span class="bold">1s:</span> {int(total_ones)} 🟩 ({percent_ones}) | 
+                            <span class="bold">2s:</span> {int(total_twos)} 🟦 ({percent_twos}) | 
+                            <span class="bold">3s:</span> {int(total_threes)} 🟪 ({percent_threes}) | 
+                            <span class="bold">4s:</span> {int(total_fours)} 🟨 ({percent_fours}) | 
+                            <span class="bold">6s:</span> {int(total_sixes)} 🟫 ({percent_sixes})
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+    
+            import streamlit as st
+            import plotly.graph_objects as go
+            import pandas as pd
+            import numpy as np
+            
+            st.markdown("## PITCH MAP VS LEFT-HANDED AND RIGHT-HANDED BATSMEN")
+            
+            # Define pitch zones with boundaries
+            zones = {
+                'Short': (8, 10),
+                'Back of Length': (6, 8),
+                'Good': (4, 6),
+                'Full': (2, 4),
+                'Yorker': (0, 2),
+                'Full Toss': (-2, 0)
+            }
+            
+            # Define adjusted line positions with compact spacing
+            line_positions = {
+                'Wide Outside Off Stump': -0.3,
+                'Outside Off Stump': -0.15,
+                'On Stumps': 0,
+                'Outside Leg Stump': 0.15,
+                'Wide Outside Leg Stump': 0.3
+            }
+            
+            length_positions = {
+                'Short': 9,
+                'Back of Length': 7,
+                'Good Length': 5,
+                'Full': 3,
+                'Yorker': 1,
+                'Full Toss': -1
+            }
+            
+            # Function to apply a small random offset to length while keeping line accurate
+            def apply_length_offset(y_value, offset_range=(-0.95, 0.95), boundary=(-2, 10)):
+                offset = np.random.uniform(offset_range[0], offset_range[1])
+                if boundary[0] <= y_value + offset <= boundary[1]:
+                    return y_value + offset
+                return y_value
+            
+            def apply_line_offset(x_value, offset_range=(-0.05, 0.05), boundary=(-0.5, 0.5)):
+                offset = np.random.uniform(offset_range[0], offset_range[1])
+                if boundary[0] <= x_value + offset <= boundary[1]:
+                    return x_value + offset
+                return x_value
+            
+            # Set up two columns for LHB and RHB views
+            col1, col2 = st.columns(2)
+            
+            # Filter data for Left-Handed and Right-Handed Batsmen
+            final_df = temp_df[temp_df["bowler"] == bowler_selected]
+            lhb_data = final_df[final_df['batting_style'] == 'Left-hand bat']
+            rhb_data = final_df[final_df['batting_style'] == 'Right-hand bat']
+            
+            # Function to create a 3D pitch map based on handedness
+            def create_pitch_map(data, handedness):
+                fig = go.Figure()
+            
+                # Define stumps and bails
+                stump_positions = [-0.05, 0, 0.05]
+                stump_height = 0.3
+                stump_thickness = 2
+                bail_height = stump_height + 0.002
+            
+                # Add stumps
+                for x_pos in stump_positions:
+                    fig.add_trace(go.Scatter3d(
+                        x=[x_pos, x_pos],
+                        y=[0, 0],
+                        z=[0, stump_height],
+                        mode='lines',
+                        line=dict(color='black', width=stump_thickness),
+                        showlegend=False
+                    ))
+            
+                # Add bails
+                fig.add_trace(go.Scatter3d(
+                    x=[stump_positions[0], stump_positions[1]],
+                    y=[0, 0],
+                    z=[bail_height, bail_height],
+                    mode='lines',
+                    line=dict(color='black', width=2),
+                    showlegend=False
+                ))
+                fig.add_trace(go.Scatter3d(
+                    x=[stump_positions[1], stump_positions[2]],
+                    y=[0, 0],
+                    z=[bail_height, bail_height],
+                    mode='lines',
+                    line=dict(color='black', width=2),
+                    showlegend=False
+                ))
+            
+                # Add pitch zones
+                for zone_name, (y_min, y_max) in zones.items():
+                    fig.add_trace(go.Scatter3d(
+                        x=[-0.5, 0.5, 0.5, -0.5, -0.5],
+                        y=[y_min, y_min, y_max, y_max, y_min],
+                        z=[0, 0, 0, 0, 0],
+                        mode='lines+markers',
+                        line=dict(color="gray", width=2),
+                        marker=dict(size=0.1, opacity=0.2),
+                        showlegend=False
+                    ))
+            
+                # Add length labels on the side of the pitch
+                for length, y_position in length_positions.items():
+                    fig.add_trace(go.Scatter3d(
+                        x=[0.6],  # Adjust X position to be to the side of the pitch
+                        y=[y_position],
+                        z=[0],
+                        mode='text',
+                        text=[length],
+                        textposition="middle right",
+                        textfont=dict(size=10, color="black"),
+                        showlegend=False
+                    ))
+            
+                # Set mirroring factor based on handedness
+                if handedness == 'Left-hand bat':
+                    mirror_factor = -1
+                elif handedness == 'Right-hand bat':
+                    mirror_factor = 1
+                else:
+                    mirror_factor = 0  # Default case if handedness is neither "Left-hand bat" nor "Right-hand bat"
+            
+                # Separate the data into wicket and non-wicket balls
+                wicket_data = data[data['is_wkt'] == 1]
+                non_wicket_data = data[data['is_wkt'] == 0]
+            
+                # Plot wicket balls first
+                for index, row in wicket_data.iterrows():
+                    # Determine base X and Y positions from line and length
+                    x_base = line_positions.get(row['line'], 0) * mirror_factor
+                    y_base = length_positions.get(row['length'], 5)
+            
+                    # Apply offset to length (y) while keeping line (x) accurate
+                    x_pos = apply_line_offset(x_base, boundary=(-0.5, 0.5))
+                    y_pos = apply_length_offset(y_base, boundary=(-2, 10))
+                    z_pos = 0
+            
+                    # Set color and size for wickets
+                    color = 'red'
+                    size = 5
+                    opacity = 1  # Set opacity to a single value
+            
+                    # Plot the wicket ball
+                    fig.add_trace(go.Scatter3d(
+                        x=[x_pos],
+                        y=[y_pos],
+                        z=[z_pos],
+                        mode='markers',
+                        marker=dict(size=size, color=color, opacity=opacity),
+                        hoverinfo="text",
+                        text=f"Runs: {row['batsman_runs']} - Wicket"
+                    ))
+            
+                # Plot non-wicket balls next
+                for index, row in non_wicket_data.iterrows():
+                    # Determine base X and Y positions from line and length
+                    x_base = line_positions.get(row['line'], 0) * mirror_factor
+                    y_base = length_positions.get(row['length'], 5)
+            
+                    # Apply offset to length (y) while keeping line (x) accurate
+                    x_pos = apply_line_offset(x_base, boundary=(-0.5, 0.5))
+                    y_pos = apply_length_offset(y_base, boundary=(-2, 10))
+                    z_pos = 0
+            
+                    # Set color based on runs
+                    batsman_runs = row['batsman_runs']
+                    color = {
+                        1: 'green',
+                        2: 'blue',
+                        3: 'violet',
+                        4: 'yellow',
+                        6: 'orange'
+                    }.get(batsman_runs, 'gray')
+                    size = 5
+                    opacity = 1  # Set opacity to a single value for non-wicket balls
+            
+                    # Plot the non-wicket ball
+                    fig.add_trace(go.Scatter3d(
+                        x=[x_pos],
+                        y=[y_pos],
+                        z=[z_pos],
+                        mode='markers',
+                        marker=dict(size=size, color=color, opacity=opacity),
+                        hoverinfo="text",
+                        text=f"Runs: {row['batsman_runs']} - {'Run'}"
+                    ))
+            
+                # Twinkle effect for wickets (already added in the wicket balls loop)
+            
+                fig.update_layout(
+                    scene=dict(
+                        xaxis=dict(title='X-axis', range=[-1, 1]),
+                        yaxis=dict(title='Y-axis', range=[-2, 10]),
+                        zaxis=dict(title='Z-axis (Height)', range=[0, 2]),
+                    ),
+                    width=1200,
+                    height=1000,
+                    showlegend=False
+                )
+                return fig
+    
+            
+            # Display each plot in the respective column
+            with col1:
+                st.write("### Against Left-Handed Batsmen")
+                if lhb_data.empty:
+                    st.write("No data for Left-Handed Batsmen")
+                else:
+                    st.plotly_chart(create_pitch_map(lhb_data, 'Left-hand bat'))
+            
+            with col2:
+                st.write("### Against Right-Handed Batsmen")
+                if rhb_data.empty:
+                    st.write("No data for Right-Handed Batsmen")
+                else:
+                    st.plotly_chart(create_pitch_map(rhb_data, 'Right-hand bat'))
+    
+    
+            import numpy as np
+            import plotly.graph_objects as go
+            import streamlit as st
+            
+            # Assuming final_df already exists with the following columns: 'line', 'length', 'batsman_runs', 'is_wkt'
+            
+            # Set up line and length mapping
+            line_positions = {
+                'Wide Outside Off Stump': 0,
+                'Outside Off Stump': 1,
+                'On Stumps': 2,
+                'Outside Leg Stump': 3,
+                'Wide Outside Leg Stump': 4
+            }
+            
+            length_positions = {
+                'Short': 0,
+                'Back of Length': 1,
+                'Good Length': 2,
+                'Full': 3,
+                'Yorker': 4
+            }
+            
+            # Initialize 5x5 grids for wicket count and run accumulation
+            wicket_count_grid = np.zeros((5, 5))
+            run_count_grid_bowler = np.zeros((5, 5))
+            
+            # Fill the grids based on final_df data
+            for _, row in final_df.iterrows():
+                line = row['line']
+                length = row['length']
+                runs = row['batsman_runs']
+                is_wkt = row['bowler_wkt']
+            
+                # Identify the correct cell for wicket count and run count
+                line_idx = line_positions.get(line, 2)  # Default to 'On Stumps' if line not found
+                length_idx = length_positions.get(length, 2)  # Default to 'Good Length' if length not found
+            
+                if is_wkt == 1:
+                    # Update wicket count in the grid for the given line and length
+                    wicket_count_grid[length_idx, line_idx] += 1
+                
+                # Update run count in the grid for the given line and length
+                run_count_grid_bowler[length_idx, line_idx] += runs
+            
+            # Labels for line and length positions
+            line_labels = ['Wide Outside Off', 'Outside Off', 'On Stumps', 'Outside Leg', 'Wide Outside Leg']
+            length_labels = ['Short', 'Back of Length', 'Good Length', 'Full', 'Yorker']
+            
+            # Function to create heatmap figure for a 5x5 grid
+            def create_heatmap(grid, title, annotations):
+                fig = go.Figure(
+                    data=go.Heatmap(
+                        z=grid,
+                        colorscale='Reds',
+                        colorbar=dict(title=f'{title}')
+                    )
+                )
+                # Add black text annotations to show values
+                for i in range(5):
+                    for j in range(5):
+                        fig.add_annotation(
+                            x=j, y=i,
+                            text=f'{annotations[i, j]}',
+                            showarrow=False,
+                            font=dict(color="black", size=12)
+                        )
+                
+                # Update layout for vertical orientation and labels
+                fig.update_layout(
+                    xaxis=dict(showgrid=False, tickvals=list(range(5)), ticktext=line_labels, title="Line"),
+                    yaxis=dict(showgrid=False, tickvals=list(range(5)), ticktext=length_labels, title="Length"),
+                    height=700, width=300  # Adjusted size for compact display
+                )
+                return fig
+            
+            # Organize layouts in two columns to make them appear side-by-side
+            col1, col2 = st.columns(2)
+            
+            # First Column - Wicket Heatmap
+            with col1:
+                st.write("### Wicket Distribution")
+                wicket_fig = create_heatmap(wicket_count_grid, "Wickets", wicket_count_grid)
+                st.plotly_chart(wicket_fig, use_container_width=True)
+            
+            # Second Column - Run Distribution for Bowler
+            with col2:
+                st.write("### Runs Given")
+                run_fig_bowler = create_heatmap(run_count_grid_bowler, "Runs", run_count_grid_bowler)
+                st.plotly_chart(run_fig_bowler, use_container_width=True)
+        else:
+            st.write("## No Bowling Data Available")
+
+                    
